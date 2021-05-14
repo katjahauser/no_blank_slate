@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
+import torch
 
 
 def prepare_ordered_dict_from_model(model):
@@ -19,38 +20,34 @@ def prepare_ordered_dict_from_model(model):
     return weights
 
 
-    # todo in utils einpflegen
-    # todo tests schreiben
-def load_masked_network(path, num_layers):
+def load_masked_network(path, num_eps):
     """
-    Loads a masked network from a given path and returns an OrderedDict of the format {layer:masked weights} for
-    use with the neural persistence calculations.
+    Loads a masked network from a given directory path and returns an OrderedDict of the format {layer:masked weights}
+    for use with the neural persistence calculations.
 
-    Internally, both the network and the mask are loaded, then the mask is applied. This function implicitly
-    assumes that the format of the open lottery ticket hypothesis framework is used.
+    This function implicitly assumes that the format of the open lottery ticket hypothesis framework is used. This
+    means, that the mask and the trained network live in the directory. The mask as mask.pth, the model as
+    model_epX_it0.pth when trained for X episodes.
 
-    :param path: string
+    :param path: string, path to the directory the files live in.
+    :param num_eps: int, number of training epochs.
     :return: OrderedDict
     """
 
-    # todo checks: path is a directory not a file
-    # todo check: allow alternative naming for mask and weights folder and check if they exist
+    if path[-1] != "/":
+        path = path + "/"
 
-    masked_weights = OrderedDict()
+    model_path = path + "model_ep{}_it0.pth".format(str(num_eps))
+    mask_path = path + "mask.pth"
 
-    for i in range(num_layers):
-        final_weights = np.load(path+"final/layer{}.npy".format(str(i)))
-    # todo handling for missing masks in first training step (+ adaption of description/docu)
-        try:
-            mask = np.load(path+"masks/layer{}.npy".format(str(i)))
-            masked_weights["layer{}".format(str(i))] = final_weights * mask
-        except FileNotFoundError:
-            print("No mask found at path {}. Ignore this, if this is the "
-                  "first (i.e., unpruned) network. In the LTH framework, this is folder 0. Returning only the "
-                  "weights.".format(path + "masks/layer{}.npy".format(str(i))))
-            masked_weights["layer{}".format(str(i))] = final_weights
+    model = torch.load(model_path)
+    mask = torch.load(mask_path)
 
-    return masked_weights
+    for name, param in model.named_parameters():
+        if name in mask.keys():
+            param.data *= mask[name]
+
+    return prepare_ordered_dict_from_model(model)
 
 
 # def get_test_accuracy(path):
