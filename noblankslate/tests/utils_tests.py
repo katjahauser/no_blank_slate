@@ -43,7 +43,7 @@ class TestPrepareOrderedDictFromModel(unittest.TestCase):
         np.testing.assert_array_equal(expected_fc_weight, weights['fc.weight'])
 
 
-class TestLoadMaskedNetwork(unittest.TestCase):
+class TestLoadMaskedWeights(unittest.TestCase):
     def test_loading_on_vanilla_ff(self):
         model = TestModel([2], outputs=2)
         torch.save(model, "./resources/test_load_masked_network/model_ep2_it0.pth")
@@ -55,7 +55,7 @@ class TestLoadMaskedNetwork(unittest.TestCase):
         expected_fc_layers_0_masked_weight = torch.tensor([[-1., 0., -1., 0.], [0., -1., -1., 0.]])
         expected_fc_masked_weight = torch.tensor([[0., 0.], [-1., -1.]])
 
-        weights = utils.load_masked_network("./resources/test_load_masked_network", 2)
+        weights = utils.load_masked_weights("./resources/test_load_masked_network", 2)
 
         self.assertEqual(expected_keys, list(weights.keys()))
         numpy.testing.assert_array_equal(expected_fc_layers_0_masked_weight, weights["fc_layers.0.weight"])

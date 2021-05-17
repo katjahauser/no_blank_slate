@@ -20,7 +20,7 @@ def prepare_ordered_dict_from_model(model):
     return weights
 
 
-def load_masked_network(path, num_eps):
+def load_masked_weights(path, num_eps):
     """
     Loads a masked network from a given directory path and returns an OrderedDict of the format {layer:masked weights}
     for use with the neural persistence calculations.
