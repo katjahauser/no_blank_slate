@@ -4,3 +4,6 @@
 *.synctex.gz
 
 noblankslate/deps
+noblankslate/data
+noblankslate/experiments
+noblankslate/tests/resources
