@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import unittest
 
 import numpy as np
@@ -9,7 +8,7 @@ import torch.nn as nn
 import src.utils as utils
 
 
-# simplified openLTH model todo maybe fix paths later and use real openLTH model.
+# simplified openLTH model
 class TestModel(nn.Module):
     def __init__(self, plan, outputs=10):
         super(TestModel, self).__init__()
@@ -22,8 +21,8 @@ class TestModel(nn.Module):
 
         self.fc_layers = nn.ModuleList(layers)
         self.fc = nn.Linear(current_size, outputs)
-        for l in self.fc_layers:
-            nn.init.constant_(l.weight, -1)
+        for layer in self.fc_layers:
+            nn.init.constant_(layer.weight, -1)
         nn.init.constant_(self.fc.weight, -1)
 
 
@@ -119,7 +118,7 @@ class TestGetFilePaths(unittest.TestCase):
         # todo replace path with actual lottery_branch folder once I get to that
         with(self.assertRaises(ValueError)):
             utils.get_file_paths("resources/test_get_file_paths/temporary_lottery_branch_test",
-                                           "lottery", valid_eps)
+                                 "lottery", valid_eps)
 
         # test eps
         with(self.assertRaises(FileNotFoundError)):
