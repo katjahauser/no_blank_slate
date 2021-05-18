@@ -63,23 +63,28 @@ class TestLoadMaskedWeights(unittest.TestCase):
 class TestGetFilePaths(unittest.TestCase):
     def test_train(self):
         train_path = "resources/test_get_file_paths/train_574e51abc295d8da78175b320504f2ba/"
-        expected_results = [train_path + "replicate_1/main/" + "logger",
-                            train_path + "replicate_1/main/" + "model_ep0_it0.pth",
-                            train_path + "replicate_1/main/" + "model_ep40_it0.pth"]
 
-        self.assertEqual(expected_results, utils.get_file_paths(train_path, "train", 40))
-        self.assertEqual(expected_results, utils.get_file_paths(train_path[:-1], "train", 40))
+        expected_result = {"logger": train_path + "replicate_1/main/" + "logger",
+                           "model_start": train_path + "replicate_1/main/" + "model_ep0_it0.pth",
+                           "model_end": train_path + "replicate_1/main/" + "model_ep40_it0.pth"}
+
+        self.assertDictEqual(expected_result, utils.get_file_paths(train_path, "train", 40))
+        self.assertDictEqual(expected_result, utils.get_file_paths(train_path[:-1], "train", 40))
 
     def test_lottery(self):
         lottery_path = "resources/test_get_file_paths/lottery_1db02943c54add91e13635735031a85e/"
         paths = [lottery_path + "replicate_1/level_{}/main/" + "logger",
+                 lottery_path + "replicate_1/level_{}/main/" + "sparsity_report.json",
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep0_it0.pth",
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep2_it0.pth"]
-        expected_results = []
+        expected_result = {"logger": [], "sparsity_report": [], "model_start": [], "model_end": []}
         for i in range(4):
-            expected_results += list(map(lambda s: s.format(str(i)), paths))
+            expected_result["logger"].append(paths[0].format(str(i)))
+            expected_result["sparsity_report"].append(paths[1].format(str(i)))
+            expected_result["model_start"].append(paths[2].format(str(i)))
+            expected_result["model_end"].append(paths[3].format(str(i)))
 
-        self.assertEqual(expected_results, utils.get_file_paths(lottery_path, "lottery", 2))
+        self.assertDictEqual(expected_result, utils.get_file_paths(lottery_path, "lottery", 2))
 
     def test_lottery_branch(self):
         valid_path = "resources/test_get_file_paths/temporary_lottery_branch_test/"
@@ -94,7 +99,7 @@ class TestGetFilePaths(unittest.TestCase):
         valid_ex_type = "train"
         valid_eps = 40
 
-        # test path
+        # test path parameter
         with(self.assertRaises(FileNotFoundError)):
             utils.get_file_paths("invalid_path", valid_ex_type, valid_eps)
         with(self.assertRaises(FileNotFoundError)):
@@ -104,13 +109,16 @@ class TestGetFilePaths(unittest.TestCase):
             missing_logger = "./resources/test_get_file_paths/train_wo_logger"
             utils.get_file_paths(missing_logger, valid_ex_type, valid_eps)
         with(self.assertRaises(FileNotFoundError)):
+            missing_report = "./resources/test_get_file_paths/lottery_wo_sparsity_report"
+            utils.get_file_paths(missing_report, "lottery", 2)
+        with(self.assertRaises(FileNotFoundError)):
             missing_model_ep0 = "./resources/test_get_file_paths/train_wo_model_ep0"
             utils.get_file_paths(missing_model_ep0, valid_ex_type, valid_eps)
         with(self.assertRaises(NotADirectoryError)):
-            utils.get_file_paths(valid_train_path + "replicate_1/main/model_ep0_it0.pth", valid_ex_type,
-                                 valid_eps)
+            not_a_directory = valid_train_path + "replicate_1/main/model_ep0_it0.pth"
+            utils.get_file_paths(not_a_directory, valid_ex_type, valid_eps)
 
-        # test types
+        # test type parameter
         with(self.assertRaises(ValueError)):
             utils.get_file_paths(valid_train_path, "invalid_type", valid_eps)
         with(self.assertRaises(ValueError)):
@@ -120,7 +128,7 @@ class TestGetFilePaths(unittest.TestCase):
             utils.get_file_paths("resources/test_get_file_paths/temporary_lottery_branch_test",
                                  "lottery", valid_eps)
 
-        # test eps
+        # test eps parameter
         with(self.assertRaises(FileNotFoundError)):
             utils.get_file_paths(valid_train_path, valid_ex_type, 4)
 
