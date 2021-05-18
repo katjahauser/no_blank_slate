@@ -141,5 +141,20 @@ class TestLoadUnmaskedWeights(unittest.TestCase):
         np.testing.assert_array_equal(expected_fc_weights, weights['fc.weight'])
 
 
+class TestLoadAccuracy(unittest.TestCase):
+    def test_load_accuracy(self):
+        expected_accuracy = 0.9644
+
+        self.assertEqual(expected_accuracy, utils.load_accuracy("./resources/test_load_accuracy/logger"))
+
+    def test_wanky_logger(self):
+        with self.assertRaises(AssertionError):
+            utils.load_accuracy("./resources/test_load_accuracy/logger_wrong_format")
+        with self.assertRaises(AssertionError):
+            utils.load_accuracy("./resources/test_load_accuracy/logger_too_large_accuracy")
+        with self.assertRaises(AssertionError):
+            utils.load_accuracy("./resources/test_load_accuracy/logger_negative_accuracy")
+
+
 if __name__ == '__main__':
     unittest.main()

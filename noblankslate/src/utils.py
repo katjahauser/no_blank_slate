@@ -127,4 +127,20 @@ def load_unmasked_weights(path):
             weights.update({name: param.detach()})
     return weights
 
-# todo implement and load_accuracy, implement "main experiment function"
+
+def load_accuracy(path):
+    """
+    Loads the test accuracy at the end of training, given the path to a logger file.
+
+    :param path: string, path to logger
+    :return: float, accuracy
+    """
+    with open(path) as file:
+        lines = file.readlines()
+        accuracy_line = lines[-2]
+        # asserts to ensure that mistakes in the logger are found.
+        assert "test_accuracy" in accuracy_line, \
+            "The line {} does not correspond to the test_accuracy.".format(accuracy_line)
+        accuracy = float(accuracy_line.split(",")[-1].strip())
+        assert 0. <= accuracy <= 1., "The accuracy {} is not in [0., 1.]."
+        return accuracy
