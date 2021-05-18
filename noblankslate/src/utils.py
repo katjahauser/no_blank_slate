@@ -51,7 +51,7 @@ def load_masked_weights(path, num_eps):
     return prepare_ordered_dict_from_model(model)
 
 
-def get_filepaths(path, experiment_type, eps):
+def get_file_paths(path, experiment_type, eps):
     """
     Loads the paths of all log (logger) files and relevant models (model_ep0_it0.pth and model_epN_it0.pth) from a
     given root directory of a OpenLTH style experiment based on the type of the experiment (since the folder structure

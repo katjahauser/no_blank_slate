@@ -63,16 +63,16 @@ class TestLoadMaskedWeights(unittest.TestCase):
 
 class TestGetFilePaths(unittest.TestCase):
     def test_train(self):
-        train_path = "resources/test_get_filepaths/train_574e51abc295d8da78175b320504f2ba/"
+        train_path = "resources/test_get_file_paths/train_574e51abc295d8da78175b320504f2ba/"
         expected_results = [train_path + "replicate_1/main/" + "logger",
                             train_path + "replicate_1/main/" + "model_ep0_it0.pth",
                             train_path + "replicate_1/main/" + "model_ep40_it0.pth"]
 
-        self.assertEqual(expected_results, utils.get_filepaths(train_path, "train", 40))
-        self.assertEqual(expected_results, utils.get_filepaths(train_path[:-1], "train", 40))
+        self.assertEqual(expected_results, utils.get_file_paths(train_path, "train", 40))
+        self.assertEqual(expected_results, utils.get_file_paths(train_path[:-1], "train", 40))
 
     def test_lottery(self):
-        lottery_path = "resources/test_get_filepaths/lottery_1db02943c54add91e13635735031a85e/"
+        lottery_path = "resources/test_get_file_paths/lottery_1db02943c54add91e13635735031a85e/"
         paths = [lottery_path + "replicate_1/level_{}/main/" + "logger",
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep0_it0.pth",
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep2_it0.pth"]
@@ -80,50 +80,50 @@ class TestGetFilePaths(unittest.TestCase):
         for i in range(4):
             expected_results += list(map(lambda s: s.format(str(i)), paths))
 
-        self.assertEqual(expected_results, utils.get_filepaths(lottery_path, "lottery", 2))
+        self.assertEqual(expected_results, utils.get_file_paths(lottery_path, "lottery", 2))
 
     def test_lottery_branch(self):
-        valid_path = "resources/test_get_filepaths/temporary_lottery_branch_test/"
+        valid_path = "resources/test_get_file_paths/temporary_lottery_branch_test/"
         valid_eps = 40
         # todo adapt experiment types test once this gets implemented.
 
         with(self.assertRaises(NotImplementedError)):
-            utils.get_filepaths(valid_path, "lottery_branch", valid_eps)
+            utils.get_file_paths(valid_path, "lottery_branch", valid_eps)
 
     def test_invalid_inputs(self):
-        valid_train_path = "resources/test_get_filepaths/train_574e51abc295d8da78175b320504f2ba/"
+        valid_train_path = "resources/test_get_file_paths/train_574e51abc295d8da78175b320504f2ba/"
         valid_ex_type = "train"
         valid_eps = 40
 
         # test path
         with(self.assertRaises(FileNotFoundError)):
-            utils.get_filepaths("invalid_path", valid_ex_type, valid_eps)
+            utils.get_file_paths("invalid_path", valid_ex_type, valid_eps)
         with(self.assertRaises(FileNotFoundError)):
-            invalid_existing_path = "resources/test_get_filepaths/train_123"
-            utils.get_filepaths(invalid_existing_path, valid_ex_type, valid_eps)
+            invalid_existing_path = "resources/test_get_file_paths/train_123"
+            utils.get_file_paths(invalid_existing_path, valid_ex_type, valid_eps)
         with(self.assertRaises(FileNotFoundError)):
-            missing_logger = "./resources/test_get_filepaths/train_wo_logger"
-            utils.get_filepaths(missing_logger, valid_ex_type, valid_eps)
+            missing_logger = "./resources/test_get_file_paths/train_wo_logger"
+            utils.get_file_paths(missing_logger, valid_ex_type, valid_eps)
         with(self.assertRaises(FileNotFoundError)):
-            missing_model_ep0 = "./resources/test_get_filepaths/train_wo_model_ep0"
-            utils.get_filepaths(missing_model_ep0, valid_ex_type, valid_eps)
+            missing_model_ep0 = "./resources/test_get_file_paths/train_wo_model_ep0"
+            utils.get_file_paths(missing_model_ep0, valid_ex_type, valid_eps)
         with(self.assertRaises(NotADirectoryError)):
-            utils.get_filepaths(valid_train_path + "replicate_1/main/model_ep0_it0.pth", valid_ex_type,
-                                valid_eps)
+            utils.get_file_paths(valid_train_path + "replicate_1/main/model_ep0_it0.pth", valid_ex_type,
+                                 valid_eps)
 
         # test types
         with(self.assertRaises(ValueError)):
-            utils.get_filepaths(valid_train_path, "invalid_type", valid_eps)
+            utils.get_file_paths(valid_train_path, "invalid_type", valid_eps)
         with(self.assertRaises(ValueError)):
-            utils.get_filepaths(valid_train_path, "lottery", valid_eps)
+            utils.get_file_paths(valid_train_path, "lottery", valid_eps)
         # todo replace path with actual lottery_branch folder once I get to that
         with(self.assertRaises(ValueError)):
-            utils.get_filepaths("resources/test_get_filepaths/temporary_lottery_branch_test",
+            utils.get_file_paths("resources/test_get_file_paths/temporary_lottery_branch_test",
                                            "lottery", valid_eps)
 
         # test eps
         with(self.assertRaises(FileNotFoundError)):
-            utils.get_filepaths(valid_train_path, valid_ex_type, 4)
+            utils.get_file_paths(valid_train_path, valid_ex_type, 4)
 
 
 if __name__ == '__main__':
