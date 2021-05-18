@@ -109,4 +109,22 @@ def get_file_paths(path, experiment_type, eps):
                                                                                        experiment_type, eps))
     return file_paths
 
-# todo implement load_(unmasked)_weights and load_accuracy, implement "main experiment function"
+
+def load_unmasked_weights(path):
+    """
+    Loads unmasked weights from file.
+
+    Implicit assumption: all params in model.named_parameters() that contain the string 'weight' are considered weights
+    and loaded.
+
+    :param path: str, path to the file containing the unmasked weights.
+    :return: OrderedDict containing name: parameter key-value pairs
+    """
+    model = torch.load(path)
+    weights = OrderedDict()
+    for name, param in model.named_parameters():
+        if "weight" in name:
+            weights.update({name: param.detach()})
+    return weights
+
+# todo implement and load_accuracy, implement "main experiment function"

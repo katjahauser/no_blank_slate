@@ -126,5 +126,20 @@ class TestGetFilePaths(unittest.TestCase):
             utils.get_file_paths(valid_train_path, valid_ex_type, 4)
 
 
+class TestLoadUnmaskedWeights(unittest.TestCase):
+    def test_loading_on_vanilla_ff(self):
+        model = TestModel([2], outputs=2)
+        torch.save(model, "./resources/test_load_unmasked_network/model_ep0_it0.pth")
+        expected_keys = ['fc_layers.0.weight', 'fc.weight']
+        expected_fc_layers_0_weights = torch.tensor([[-1., -1., -1., -1.], [-1., -1., -1., -1.]])
+        expected_fc_weights = torch.tensor([[-1., -1.], [-1., -1.]])
+
+        weights = utils.load_unmasked_weights("./resources/test_load_unmasked_network/model_ep0_it0.pth")
+
+        self.assertEqual(expected_keys, list(weights.keys()))
+        np.testing.assert_array_equal(expected_fc_layers_0_weights, weights['fc_layers.0.weight'])
+        np.testing.assert_array_equal(expected_fc_weights, weights['fc.weight'])
+
+
 if __name__ == '__main__':
     unittest.main()
