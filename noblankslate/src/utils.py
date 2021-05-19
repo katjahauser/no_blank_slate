@@ -17,29 +17,20 @@ def prepare_ordered_dict_from_model(model):
     weights = OrderedDict()
     weight_keys = [key for key in model.state_dict().keys() if "weight" in key]
     for key in weight_keys:
-        weights.update({key: model.state_dict()[key]})
+        weights.update({key: model.state_dict()[key].detach().numpy()})
     return weights
 
 
-def load_masked_weights(path, num_eps):
+def load_masked_weights(model_path, mask_path):
     """
-    Loads a masked network from a given directory path and returns an OrderedDict of the format {layer:masked weights}
-    for use with the neural persistence calculations.
+    Loads a masked network and returns an OrderedDict of the format {layer:masked weights} for use with the neural
+    persistence calculations.
 
-    This function implicitly assumes that the format of the open lottery ticket hypothesis framework is used. This
-    means, that the mask and the trained network live in the directory. The mask as mask.pth, the model as
-    model_epX_it0.pth when trained for X episodes.
 
-    :param path: string, path to the directory the files live in.
-    :param num_eps: int, number of training epochs.
+    :param model_path: string, path to the end_model
+    :param mask_path: string, path to the mask
     :return: OrderedDict
     """
-
-    if path[-1] != "/":
-        path = path + "/"
-
-    model_path = path + "model_ep{}_it0.pth".format(str(num_eps))
-    mask_path = path + "mask.pth"
 
     model = torch.load(model_path)
     mask = torch.load(mask_path)
@@ -100,7 +91,11 @@ def get_file_paths(experiment_root_path, experiment_type, eps):
             file_paths["logger"].append(base_path + level + "/main/logger")
             file_paths["sparsity_report"].append(base_path + level + "/main/sparsity_report.json")
             file_paths["model_start"].append(base_path + level + "/main/model_ep0_it0.pth")
-            file_paths["model_end"].append(base_path + level + "/main/model_ep{}_it0.pth".format(str(eps)))
+            if level == "level_0":
+                file_paths["model_end"].append((base_path + level + "/main/model_ep{}_it0.pth".format(str(eps)), None))
+            else:
+                file_paths["model_end"].append((base_path + level + "/main/model_ep{}_it0.pth".format(str(eps)),
+                                                base_path + level + "/main/mask.pth"))
 
     elif experiment_type == "lottery_branch":
         raise NotImplementedError("Lottery_branch functionality not implemented, yet")
@@ -116,13 +111,29 @@ def get_file_paths(experiment_root_path, experiment_type, eps):
                                         .format(file_path, experiment_root_path, experiment_type, eps))
         elif type(file_path) == list:
             for fp in file_path:
-                if not os.path.exists(fp):
-                    raise FileNotFoundError("The path {} does not point to a file. Please check the parameters you "
-                                            "provided. Path: {}, experiment type: {}, epochs: {}"
-                                            .format(fp, experiment_root_path, experiment_type, eps))
+                if type(fp) == str:
+                    if not os.path.exists(fp):
+                        raise FileNotFoundError("The path {} does not point to a file. Please check the parameters you "
+                                                "provided. Path: {}, experiment type: {}, epochs: {}"
+                                                .format(fp, experiment_root_path, experiment_type, eps))
+                elif type(fp) == tuple:
+                    if not os.path.exists(fp[0]):
+                        raise FileNotFoundError("The path {} does not point to a file. Please check the parameters you "
+                                                "provided. Path: {}, experiment type: {}, epochs: {}"
+                                                .format(fp[0], experiment_root_path, experiment_type, eps))
+                    if fp[1] is not None:
+                        if not os.path.exists(fp[1]):
+                            raise FileNotFoundError("The path {} does not point to a file. Please check the parameters "
+                                                    "you provided. Path: {}, experiment type: {}, epochs: {}"
+                                                    .format(fp[1], experiment_root_path, experiment_type, eps))
+                else:
+                    raise TypeError("The type of fp ({}) is neither a string nor a tuple. Something went wrong when "
+                                    "creating the model_end tuples (paths to model at the end of training and mask)."
+                                    .format(type(fp)))
+
         else:
             raise TypeError("The type of file_paths.values() ({}) is neither string nor list. Something went wrong "
-                            "when creating the file paths.")
+                            "when creating the file paths.".format(type(file_paths.values())))
     return file_paths
 
 
@@ -140,7 +151,7 @@ def load_unmasked_weights(path):
     weights = OrderedDict()
     for name, param in model.named_parameters():
         if "weight" in name:
-            weights.update({name: param.detach()})
+            weights.update({name: param.detach().numpy()})
     return weights
 
 

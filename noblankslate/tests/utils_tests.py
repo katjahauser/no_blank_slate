@@ -53,7 +53,8 @@ class TestLoadMaskedWeights(unittest.TestCase):
         expected_fc_layers_0_masked_weight = torch.tensor([[-1., 0., -1., 0.], [0., -1., -1., 0.]])
         expected_fc_masked_weight = torch.tensor([[0., 0.], [-1., -1.]])
 
-        weights = utils.load_masked_weights("./resources/test_load_masked_network", 2)
+        weights = utils.load_masked_weights("./resources/test_load_masked_network/model_ep2_it0.pth",
+                                            "./resources/test_load_masked_network/mask.pth")
 
         self.assertEqual(expected_keys, list(weights.keys()))
         numpy.testing.assert_array_equal(expected_fc_layers_0_masked_weight, weights["fc_layers.0.weight"])
@@ -76,13 +77,17 @@ class TestGetFilePaths(unittest.TestCase):
         paths = [lottery_path + "replicate_1/level_{}/main/" + "logger",
                  lottery_path + "replicate_1/level_{}/main/" + "sparsity_report.json",
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep0_it0.pth",
-                 lottery_path + "replicate_1/level_{}/main/" + "model_ep2_it0.pth"]
+                 lottery_path + "replicate_1/level_{}/main/" + "model_ep2_it0.pth",
+                 lottery_path + "replicate_1/level_{}/main/" + "mask.pth"]
         expected_result = {"logger": [], "sparsity_report": [], "model_start": [], "model_end": []}
         for i in range(4):
             expected_result["logger"].append(paths[0].format(str(i)))
             expected_result["sparsity_report"].append(paths[1].format(str(i)))
             expected_result["model_start"].append(paths[2].format(str(i)))
-            expected_result["model_end"].append(paths[3].format(str(i)))
+            if i == 0:
+                expected_result["model_end"].append((paths[3].format(str(i)), None))
+            else:
+                expected_result["model_end"].append((paths[3].format(str(i)), paths[4].format(str(i))))
 
         self.assertDictEqual(expected_result, utils.get_file_paths(lottery_path, "lottery", 2))
 
