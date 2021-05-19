@@ -163,5 +163,16 @@ class TestLoadAccuracy(unittest.TestCase):
             utils.load_accuracy("./resources/test_load_accuracy/logger_negative_accuracy")
 
 
+class TestLoadSparsity(unittest.TestCase):
+    def test_load_sparsity(self):
+        expected_sparsity = 170366.0/266200.0
+
+        self.assertEqual(expected_sparsity, utils.load_sparsity("./resources/test_load_sparsity/sparsity_report.json"))
+
+    def test_wanky_sparsity(self):
+        with self.assertRaises(AssertionError):
+            utils.load_sparsity("./resources/test_load_sparsity/sparsity_report_more_unpruned_then_there.json")
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import os.path
 
+import json
 import torch
 
 
@@ -57,7 +58,8 @@ def get_file_paths(experiment_root_path, experiment_type, eps):
     This is based on the type of the experiment (since the folder structure below the root folder is different
     depending on the experiment performed.)
 
-    :param experiment_root_path: str, path to the parent directory, e.g. "experiments/train_574e51abc295d8da78175b320504f2ba/"
+    :param experiment_root_path: str, path to the parent directory, e.g.
+    "experiments/train_574e51abc295d8da78175b320504f2ba/"
     :param experiment_type: str, one of "train", "lottery", "lottery_branch" depending on the lottery ticket experiment
     you want to analyze
     :param eps: int, number of training epochs. Necessary to generate the path to the trained model.
@@ -158,3 +160,19 @@ def load_accuracy(path):
         accuracy = float(accuracy_line.split(",")[-1].strip())
         assert 0. <= accuracy <= 1., "The accuracy {} is not in [0., 1.]."
         return accuracy
+
+
+def load_sparsity(path):
+    """
+    Computes the sparsity from a json file containing the number of the total weights and the unpruned weights.
+    Expected keywords are "unpruned" and "total".
+
+    :param path: string, path to json file containing the number of total and unpruned weights.
+    :return: float, sparsity
+    """
+    with open(path) as file:
+        report = json.load(file)
+        sparsity = report['unpruned']/report['total']
+        assert 0. <= sparsity <= 1., "The sparsity {} is outside the possible interval [0, 1]. Please check the " \
+                                     "corresponding sparsity report {}.".format(sparsity, path)
+        return sparsity
