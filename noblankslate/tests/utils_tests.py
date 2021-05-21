@@ -65,7 +65,7 @@ class TestGetFilePaths(unittest.TestCase):
     def test_train(self):
         train_path = "resources/test_get_file_paths/train_574e51abc295d8da78175b320504f2ba/"
 
-        expected_result = {"logger": train_path + "replicate_1/main/" + "logger",
+        expected_result = {"accuracy": train_path + "replicate_1/main/" + "logger",
                            "model_start": train_path + "replicate_1/main/" + "model_ep0_it0.pth",
                            "model_end": train_path + "replicate_1/main/" + "model_ep40_it0.pth"}
 
@@ -79,10 +79,10 @@ class TestGetFilePaths(unittest.TestCase):
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep0_it0.pth",
                  lottery_path + "replicate_1/level_{}/main/" + "model_ep2_it0.pth",
                  lottery_path + "replicate_1/level_{}/main/" + "mask.pth"]
-        expected_result = {"logger": [], "sparsity_report": [], "model_start": [], "model_end": []}
+        expected_result = {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}
         for i in range(4):
-            expected_result["logger"].append(paths[0].format(str(i)))
-            expected_result["sparsity_report"].append(paths[1].format(str(i)))
+            expected_result["accuracy"].append(paths[0].format(str(i)))
+            expected_result["sparsity"].append(paths[1].format(str(i)))
             expected_result["model_start"].append(paths[2].format(str(i)))
             if i == 0:
                 expected_result["model_end"].append((paths[3].format(str(i)), None))

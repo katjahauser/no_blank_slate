@@ -80,16 +80,16 @@ def get_file_paths(experiment_root_path, experiment_type, eps):
 
     if experiment_type == "train":
         base_path = experiment_root_path + "replicate_1/main/"
-        file_paths = {"logger": base_path + "logger", "model_start": base_path + "model_ep0_it0.pth",
+        file_paths = {"accuracy": base_path + "logger", "model_start": base_path + "model_ep0_it0.pth",
                       "model_end": base_path + "model_ep{}_it0.pth".format(str(eps))}
 
     elif experiment_type == "lottery":
-        file_paths = {"logger": [], "sparsity_report": [], "model_start": [], "model_end": []}
+        file_paths = {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}
         levels = os.listdir(experiment_root_path + "replicate_1/")
         base_path = experiment_root_path + "replicate_1/"
         for level in levels:
-            file_paths["logger"].append(base_path + level + "/main/logger")
-            file_paths["sparsity_report"].append(base_path + level + "/main/sparsity_report.json")
+            file_paths["accuracy"].append(base_path + level + "/main/logger")
+            file_paths["sparsity"].append(base_path + level + "/main/sparsity_report.json")
             file_paths["model_start"].append(base_path + level + "/main/model_ep0_it0.pth")
             if level == "level_0":
                 file_paths["model_end"].append((base_path + level + "/main/model_ep{}_it0.pth".format(str(eps)), None))
