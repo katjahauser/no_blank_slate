@@ -5,6 +5,7 @@ import numpy.testing
 import torch
 import torch.nn as nn
 
+from deps.neural_persistence.src import tda
 import src.utils as utils
 
 
@@ -177,6 +178,21 @@ class TestLoadSparsity(unittest.TestCase):
     def test_wanky_sparsity(self):
         with self.assertRaises(AssertionError):
             utils.load_sparsity("./resources/test_load_sparsity/sparsity_report_more_unpruned_then_there.json")
+
+
+class TestPrepareNeuralPersistencesForPlotting(unittest.TestCase):
+    def test_prepate_np_for_plotting(self):
+        neural_pers = [{'fc_layers.0.weight': {'total_persistence': 1.0, 'total_persistence_normalized': 0.4472135954999579},
+                        'fc.weight': {'total_persistence': 1.0, 'total_persistence_normalized': 0.5773502691896258},
+                        'global': {'accumulated_total_persistence': 2.0, 'accumulated_total_persistence_normalized': 0.5122819323447919}},
+                       {'fc_layers.0.weight': {'total_persistence': 1.4142135623730951, 'total_persistence_normalized': 0.6324555320336759},
+                        'fc.weight': {'total_persistence': 1.4142135623730951, 'total_persistence_normalized': 0.8164965809277261},
+                        'global': {'accumulated_total_persistence': 2.8284271247461903, 'accumulated_total_persistence_normalized': 0.724476056480701}}]
+        expected_np = {'fc_layers.0.weight': [0.4472135954999579, 0.6324555320336759],
+                       'fc.weight': [0.5773502691896258, 0.8164965809277261],
+                       'global': [0.5122819323447919, 0.724476056480701]}
+
+        self.assertDictEqual(expected_np, utils.prepare_neural_persistence_for_plotting(neural_pers))
 
 
 if __name__ == '__main__':

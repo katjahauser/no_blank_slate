@@ -187,3 +187,22 @@ def load_sparsity(path):
         assert 0. <= sparsity <= 1., "The sparsity {} is outside the possible interval [0, 1]. Please check the " \
                                      "corresponding sparsity report {}.".format(sparsity, path)
         return sparsity
+
+
+def prepare_neural_persistence_for_plotting(neural_persistences):
+    """
+    Prepares neural persistence outputs for convenient plotting wih matplotlib. See parameters and return for details.
+
+    :param neural_persistences: list of dicts obtained from tda.PerLayerCalculation
+    :return: dict of lists with keys being the layer names and an additional key global, the values being lists of
+    floats representing the averaged neural persistences
+    """
+    neural_pers_for_plotting = {key: [] for key in neural_persistences[0].keys()}
+
+    for neural_pers in neural_persistences:
+        for key, value in neural_pers.items():
+            if key == "global":
+                neural_pers_for_plotting["global"].append(value["accumulated_total_persistence_normalized"])
+            else:
+                neural_pers_for_plotting[key].append(value["total_persistence_normalized"])
+    return neural_pers_for_plotting
