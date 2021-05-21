@@ -11,10 +11,14 @@ from utils_tests import TestModel
 
 def setup_simplified_lottery_experiment():
     model = TestModel([2], outputs=2)
-    torch.save(model, "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep0_it0.pth")
-    torch.save(model, "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep2_it0.pth")
-    torch.save(model, "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep0_it0.pth")
-    torch.save(model, "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep2_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep0_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep2_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep0_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep2_it0.pth")
 
     mask_level_0 = {'fc_layers.0.weight': torch.tensor([[1., 1., 1., 1.], [1., 1., 1., 1.]]),
                     'fc.weight': torch.tensor([[1., 1.], [1., 1.]])}
@@ -61,7 +65,8 @@ class TestSparsityNeuralPersistence(unittest.TestCase):
 
         expected_sparsities = [1.0, 212959.0/266200.0]
 
-        sparsities, neural_pers = experiment.sparsity_neural_persistence_plot("./resources/test_plots/lottery_simplified", 2)
+        sparsities, neural_pers = experiment.sparsity_neural_persistence_plot(
+            "./resources/test_plots/lottery_simplified", 2)
 
         self.assertEqual(expected_sparsities, sparsities)
         self.assertDictEqual(per_layer_calc(expected_dict_level_0), neural_pers[0])
@@ -75,13 +80,14 @@ class TestSparsityNeuralPersistence(unittest.TestCase):
 
         _, _ = experiment.sparsity_neural_persistence_plot("./resources/test_plots/lottery_simplified", 2,
                                                            show_plot=False, save_plot=True)
-        self.assertTrue(os.path.isfile("./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png"))
+        self.assertTrue(os.path.isfile(
+            "./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png"))
 
 
 class TestAccuracyNeuralPersistence(unittest.TestCase):
     def test_acc_np(self):
         correct_eps = 2
-        accuracies = [0.9644, 0.9678]
+        expected_accuracies = [0.9644, 0.9678]
 
         setup_simplified_lottery_experiment()
 
@@ -93,12 +99,24 @@ class TestAccuracyNeuralPersistence(unittest.TestCase):
                                              ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
         per_layer_calc = PerLayerCalculation()
 
-        self.assertDictEqual(per_layer_calc(expected_dict_level_0),
-                             experiment.sparsity_accuracy_plot("./resources/test_plots/lottery_simplified", correct_eps)[0])
-        self.assertDictEqual(per_layer_calc(expected_dict_level_1),
-                             experiment.sparsity_accuracy_plot("./resources/test_plots/lottery_simplified", correct_eps)[1])
+        accuracies, neural_pers = experiment.accuracy_neural_persistence_plot(
+            "./resources/test_plots/lottery_simplified", correct_eps, show_plot=False, save_plot=False)
 
-        experiment.accuracy_neural_persistence("dummypath")
+        self.assertEqual(expected_accuracies, accuracies)
+
+        self.assertDictEqual(per_layer_calc(expected_dict_level_0), neural_pers[0])
+        self.assertDictEqual(per_layer_calc(expected_dict_level_1), neural_pers[1])
+
+    def test_save_plot(self):
+        if os.path.isfile("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png"):
+            os.remove("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png")
+
+        assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png")
+
+        _, _ = experiment.accuracy_neural_persistence_plot("./resources/test_plots/lottery_simplified", 2,
+                                                           show_plot=False, save_plot=True)
+        self.assertTrue(os.path.isfile(
+            "./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png"))
 
 
 if __name__ == '__main__':

@@ -7,17 +7,16 @@ import torch
 
 def prepare_ordered_dict_from_model(model):
     """
-    tda.PerLayerCalculation requires the weights of a model to be presented as an OrderedDict. Since the open_LTH
-    framework uses Pytorch and the neural persistence framework uses Tensorflow, we need a conversion.
+    tda.PerLayerCalculation requires the weights of a model to be presented as an OrderedDict.
 
-    :param model: A Pytorch model.
+    :param model: An Ordered Dict containing weights and biases.
     :return: An OrderedDict containing layer_name:numpy_weights tuples.
     """
 
     weights = OrderedDict()
-    weight_keys = [key for key in model.state_dict().keys() if "weight" in key]
+    weight_keys = [key for key in model.keys() if "weight" in key]
     for key in weight_keys:
-        weights.update({key: model.state_dict()[key].detach().numpy()})
+        weights.update({key: model[key].detach().numpy()})
     return weights
 
 
@@ -35,7 +34,7 @@ def load_masked_weights(model_path, mask_path):
     model = torch.load(model_path)
     mask = torch.load(mask_path)
 
-    for name, param in model.named_parameters():
+    for name, param in model.items():
         if name in mask.keys():
             param.data *= mask[name]
 
@@ -149,7 +148,7 @@ def load_unmasked_weights(path):
     """
     model = torch.load(path)
     weights = OrderedDict()
-    for name, param in model.named_parameters():
+    for name, param in model.items():
         if "weight" in name:
             weights.update({name: param.detach().numpy()})
     return weights

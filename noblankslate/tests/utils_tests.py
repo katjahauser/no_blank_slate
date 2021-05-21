@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import unittest
 
 import numpy as np
@@ -5,7 +6,6 @@ import numpy.testing
 import torch
 import torch.nn as nn
 
-from deps.neural_persistence.src import tda
 import src.utils as utils
 
 
@@ -35,7 +35,7 @@ class TestPrepareOrderedDictFromModel(unittest.TestCase):
         expected_fc_layers_0_weight = torch.tensor([[-1., -1., -1., -1.], [-1., -1., -1., -1.]])
         expected_fc_weight = torch.tensor([[-1., -1.], [-1., -1.]])
 
-        weights = utils.prepare_ordered_dict_from_model(model)
+        weights = utils.prepare_ordered_dict_from_model(OrderedDict(model.named_parameters()))
 
         self.assertEqual(expected_keys, list(weights.keys()))
         np.testing.assert_array_equal(expected_fc_layers_0_weight, weights['fc_layers.0.weight'])
@@ -45,7 +45,7 @@ class TestPrepareOrderedDictFromModel(unittest.TestCase):
 class TestLoadMaskedWeights(unittest.TestCase):
     def test_loading_on_vanilla_ff(self):
         model = TestModel([2], outputs=2)
-        torch.save(model, "./resources/test_load_masked_network/model_ep2_it0.pth")
+        torch.save(OrderedDict(model.named_parameters()), "./resources/test_load_masked_network/model_ep2_it0.pth")
         mask = {'fc_layers.0.weight': torch.tensor([[1., 0., 1., 0.], [0., 1., 1., 0.]]),
                 'fc.weight': torch.tensor([[0., 0.], [1., 1.]])}
         torch.save({k: v.int() for k, v in mask.items()}, "./resources/test_load_masked_network/mask.pth")
@@ -142,7 +142,7 @@ class TestGetFilePaths(unittest.TestCase):
 class TestLoadUnmaskedWeights(unittest.TestCase):
     def test_loading_on_vanilla_ff(self):
         model = TestModel([2], outputs=2)
-        torch.save(model, "./resources/test_load_unmasked_network/model_ep0_it0.pth")
+        torch.save(OrderedDict(model.named_parameters()), "./resources/test_load_unmasked_network/model_ep0_it0.pth")
         expected_keys = ['fc_layers.0.weight', 'fc.weight']
         expected_fc_layers_0_weights = torch.tensor([[-1., -1., -1., -1.], [-1., -1., -1., -1.]])
         expected_fc_weights = torch.tensor([[-1., -1.], [-1., -1.]])
