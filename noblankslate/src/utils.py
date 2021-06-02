@@ -41,51 +41,50 @@ def load_masked_weights(model_path, mask_path):
     return prepare_ordered_dict_from_model(model)
 
 
-def get_file_paths(experiment_root_path, experiment_type, eps):
+def get_paths_from_replicate(base_path, experiment_type, eps):
     """
     Creates the paths of all logger files, sparsity reports and relevant models (model_ep0_it0.pth and
-    model_epN_it0.pth) from a given root directory of a OpenLTH style experiment.
-    This is based on the type of the experiment (since the folder structure below the root folder is different
+    model_epN_it0.pth) from a given replicate directory of a OpenLTH style experiment.
+    This is dependant on the type of the experiment (since the folder structure below the root folder is different
     depending on the experiment performed.)
 
-    :param experiment_root_path: str, path to the parent directory, e.g.
-    "experiments/train_574e51abc295d8da78175b320504f2ba/"
+    :param base_path: str, path to the parent directory, e.g.
+    "experiments/train_574e51abc295d8da78175b320504f2ba/replicate_2/"
     :param experiment_type: str, one of "train", "lottery", "lottery_branch" depending on the lottery ticket experiment
     you want to analyze
     :param eps: int, number of training epochs. Necessary to generate the path to the trained model.
     :return: dict, with the types of paths (logger, model_start, etc.) as keys and a string (for train) and a list of
     strings (for lottery) as values.
     """
-    if not os.path.exists(experiment_root_path):
-        raise FileNotFoundError("The path '{}' is not a valid path.".format(experiment_root_path))
+    if not os.path.exists(base_path):
+        raise FileNotFoundError("The path '{}' is not a valid path.".format(base_path))
 
-    if not os.path.isdir(experiment_root_path):
+    if not os.path.isdir(base_path):
         raise NotADirectoryError("The path '{}' does not lead to a directory. Please provide a directory."
-                                 .format(experiment_root_path))
+                                 .format(base_path))
 
-    if experiment_root_path[-1] != "/":
-        experiment_root_path = experiment_root_path + "/"
+    if base_path[-1] != "/":
+        base_path = base_path + "/"
 
-    if experiment_type not in experiment_root_path:
+    if experiment_type not in base_path:
         raise ValueError("You provided the experiment type {}, but the path suggests another type ({}). Please add "
                          "the experiment type to the path, if you created your own filenames during the OpenLTH "
-                         "experiments.".format(experiment_type, experiment_root_path))
+                         "experiments.".format(experiment_type, base_path))
     # special case because I don't want to compile a regex just for the error of experiment type "lottery" as type on a
     # "lottery_branch" experiment.
-    if experiment_type == "lottery" and "lottery_branch" in experiment_root_path:
+    if experiment_type == "lottery" and "lottery_branch" in base_path:
         raise ValueError("You provided the experiment type {}, but the path suggests another type ({}). Please add "
                          "the experiment type to the path, if you created your own filenames during the OpenLTH "
-                         "experiments.".format(experiment_type, experiment_root_path))
+                         "experiments.".format(experiment_type, base_path))
 
     if experiment_type == "train":
-        base_path = experiment_root_path + "replicate_1/main/"
+        base_path = base_path + "main/"
         file_paths = {"accuracy": base_path + "logger", "model_start": base_path + "model_ep0_it0.pth",
                       "model_end": base_path + "model_ep{}_it0.pth".format(str(eps))}
 
     elif experiment_type == "lottery":
         file_paths = {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}
-        levels = os.listdir(experiment_root_path + "replicate_1/")
-        base_path = experiment_root_path + "replicate_1/"
+        levels = os.listdir(base_path)
         for level in levels:
             file_paths["accuracy"].append(base_path + level + "/main/logger")
             file_paths["sparsity"].append(base_path + level + "/main/sparsity_report.json")
@@ -107,29 +106,28 @@ def get_file_paths(experiment_root_path, experiment_type, eps):
             if not os.path.exists(file_path):
                 raise FileNotFoundError("The path {} does not point to a file. Please check the parameters you "
                                         "provided. Path: {}, experiment type: {}, epochs: {}"
-                                        .format(file_path, experiment_root_path, experiment_type, eps))
+                                        .format(file_path, base_path, experiment_type, eps))
         elif type(file_path) == list:
             for fp in file_path:
                 if type(fp) == str:
                     if not os.path.exists(fp):
                         raise FileNotFoundError("The path {} does not point to a file. Please check the parameters you "
                                                 "provided. Path: {}, experiment type: {}, epochs: {}"
-                                                .format(fp, experiment_root_path, experiment_type, eps))
+                                                .format(fp, base_path, experiment_type, eps))
                 elif type(fp) == tuple:
                     if not os.path.exists(fp[0]):
                         raise FileNotFoundError("The path {} does not point to a file. Please check the parameters you "
                                                 "provided. Path: {}, experiment type: {}, epochs: {}"
-                                                .format(fp[0], experiment_root_path, experiment_type, eps))
+                                                .format(fp[0], base_path, experiment_type, eps))
                     if fp[1] is not None:
                         if not os.path.exists(fp[1]):
                             raise FileNotFoundError("The path {} does not point to a file. Please check the parameters "
                                                     "you provided. Path: {}, experiment type: {}, epochs: {}"
-                                                    .format(fp[1], experiment_root_path, experiment_type, eps))
+                                                    .format(fp[1], base_path, experiment_type, eps))
                 else:
                     raise TypeError("The type of fp ({}) is neither a string nor a tuple. Something went wrong when "
                                     "creating the model_end tuples (paths to model at the end of training and mask)."
                                     .format(type(fp)))
-
         else:
             raise TypeError("The type of file_paths.values() ({}) is neither string nor list. Something went wrong "
                             "when creating the file paths.".format(type(file_paths.values())))
