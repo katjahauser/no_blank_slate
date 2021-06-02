@@ -134,6 +134,43 @@ def get_paths_from_replicate(base_path, experiment_type, eps):
     return file_paths
 
 
+def get_paths_from_experiment(base_path, experiment_type, eps):
+    """
+    Works on top of get_paths_from_replicate to generate all paths for a series of OpenLTH experiments (read: for all
+    replicates of an experiemnt) from the experiment root directory.
+
+    :param base_path: str, path of the OpenLTH experiment to generate all paths for
+    :param experiment_type: str, type of the experiment in ["lottery", "lottery_branch", "train"]
+    :param eps: int > 0, number of training epochs
+    :return: dict of dicts of format {replicate_N:{paths as dicts as returned by get_paths_from_replicate}
+    """
+
+    if not os.path.exists(base_path):
+        raise FileNotFoundError("The path {} does not exist.".format(base_path))
+
+    if base_path[-1] != "/":
+        base_path = base_path + "/"
+
+    paths = {}
+
+    # todo once all experiment types are implemented, we can refactor the if-elif-else construction to just if (in valid types)-else and just pass the types
+    if experiment_type == "train" or experiment_type == "lottery_branch":
+        raise NotImplementedError
+    elif experiment_type == "lottery":
+        # filtering out directories for plotting and other non-replicate directories -- quick-and-dirty version of the
+        # test without re
+        replicates = [path for path in os.listdir(base_path) if "replicate" in path]
+        if len(replicates) == 0:
+            raise FileNotFoundError("The directory {} contains no replicate subdirectories.".format(base_path))
+        for replicate in replicates:
+            paths.update({replicate: get_paths_from_replicate(base_path + replicate, experiment_type, eps)})
+    else:
+        raise ValueError("The type {} is not a valid experiment type. Possible types are 'lottery', 'lottery_branch' "
+                         "and 'train'.".format(experiment_type))
+
+    return paths
+
+
 def load_unmasked_weights(path):
     """
     Loads unmasked weights from file.

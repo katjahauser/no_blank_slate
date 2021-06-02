@@ -139,6 +139,57 @@ class TestGetPathsFromReplicate(unittest.TestCase):
             utils.get_paths_from_replicate(valid_train_path, valid_ex_type, 4)
 
 
+class TestGetPathsFromExperiment(unittest.TestCase):
+    def test_loading_lottery_paths(self):
+        # the directory behind lottery_path contains a placeholder for the plot directory to test that these paths are
+        # not considered
+        lottery_path = "resources/test_get_paths_from_experiment/lottery_1db02943c54add91e13635735031a85e/"
+        paths = [lottery_path + "replicate_{}/level_{}/main/" + "logger",
+                 lottery_path + "replicate_{}/level_{}/main/" + "sparsity_report.json",
+                 lottery_path + "replicate_{}/level_{}/main/" + "model_ep0_it0.pth",
+                 lottery_path + "replicate_{}/level_{}/main/" + "model_ep2_it0.pth",
+                 lottery_path + "replicate_{}/level_{}/main/" + "mask.pth"]
+        expected_result = {"replicate_1": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []},
+                           "replicate_2": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}}
+        for i in range(1, 3):
+            for j in range(4):
+                expected_result["replicate_{}".format(str(i))]["accuracy"].append(paths[0].format(str(i), str(j)))
+                expected_result["replicate_{}".format(str(i))]["sparsity"].append(paths[1].format(str(i), str(j)))
+                expected_result["replicate_{}".format(str(i))]["model_start"].append(paths[2].format(str(i), str(j)))
+                if j == 0:
+                    expected_result["replicate_{}".format(str(i))]["model_end"].append((paths[3].format(str(i), str(j)),
+                                                                                        None))
+                else:
+                    expected_result["replicate_{}".format(str(i))]["model_end"].append(
+                        (paths[3].format(str(i), str(j)), paths[4].format(str(i), str(j))))
+
+        self.assertDictEqual(expected_result, utils.get_paths_from_experiment(lottery_path, "lottery", 2))
+        # test correct behaviour for paths without trailing slash
+        self.assertDictEqual(expected_result, utils.get_paths_from_experiment(lottery_path[:-1], "lottery", 2))
+
+    def test_loading_train_paths(self):
+        with self.assertRaises(NotImplementedError):
+            utils.get_paths_from_experiment("resources/test_get_paths_from_experiment/train_placeholder", "train", -1)
+
+    def test_loading_lottery_branch_paths(self):
+        with self.assertRaises(NotImplementedError):
+            utils.get_paths_from_experiment("resources/test_get_paths_from_experiment/lottery_branch_placeholder",
+                                            "lottery_branch", -1)
+
+    def test_invalid_inputs(self):
+        valid_path = "resources/test_get_paths_from_experiment/lottery_1db02943c54add91e13635735031a85e"
+        valid_eps = 2
+        with self.assertRaises(ValueError):
+            utils.get_paths_from_experiment(valid_path, "invalid_experiment_type", valid_eps)
+
+        with self.assertRaises(FileNotFoundError):
+            utils.get_paths_from_experiment("invalid_path", "train", valid_eps)
+
+        with self.assertRaises(FileNotFoundError):
+            utils.get_paths_from_experiment("resources/test_get_paths_from_experiment/no_replicates", "lottery",
+                                            valid_eps)
+
+
 class TestLoadUnmaskedWeights(unittest.TestCase):
     def test_loading_on_vanilla_ff(self):
         model = TestModel([2], outputs=2)
