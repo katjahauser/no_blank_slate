@@ -2,6 +2,7 @@ from collections import OrderedDict
 import os.path
 import unittest
 
+import numpy as np
 import torch
 
 from deps.neural_persistence.src.tda import PerLayerCalculation
@@ -117,6 +118,37 @@ class TestAccuracyNeuralPersistenceReplicate(unittest.TestCase):
                                                                      show_plot=False, save_plot=True)
         self.assertTrue(os.path.isfile(
             "./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png"))
+
+
+class TestSparsityAccuracyExperiment(unittest.TestCase):
+    def test_sparsity_acc(self):
+        expected_mean_accuracies = [np.mean([0.9644, 0.9544]), np.mean([0.9678, 0.9878])]
+        expected_std_accuracies = [np.std([0.9644, 0.9544]), np.std([0.9678, 0.9878])]
+        expected_sparsities = [1.0, 212959.0/266200.0]
+
+        sparsities, mean_accuracies, std_accuracies = experiment.sparsity_accuracy_plot_experiment(
+            "./resources/test_plots/lottery_simplified_experiment/", 2)
+
+        self.assertEqual(expected_sparsities, sparsities)
+        self.assertEqual(expected_mean_accuracies, mean_accuracies)
+        self.assertEqual(expected_std_accuracies, std_accuracies)
+
+    def test_equal_sparsity_lengths(self):
+        with self.assertRaises(AssertionError):
+            experiment.sparsity_accuracy_plot_experiment(
+                "./resources/test_plots/lottery_simplified_experiment_unequal_sparsities", 2)
+
+    def test_save_plot(self):
+        if os.path.isfile("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png"):
+            os.remove("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png")
+
+        assert not os.path.exists(
+            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png")
+
+        _, _, _ = experiment.sparsity_accuracy_plot_experiment("./resources/test_plots/lottery_simplified_experiment/",
+                                                               2, show_plot=False, save_plot=True)
+        self.assertTrue(os.path.isfile(
+            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png"))
 
 
 if __name__ == '__main__':
