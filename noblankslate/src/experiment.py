@@ -1,4 +1,5 @@
 import os.path
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -9,12 +10,11 @@ import src.utils as utils
 # plots:
 # * NP of mask vs NP of masked weights
 
-
-def sparsity_accuracy_plot(experiment_root_path, eps, show_plot=True, save_plot=False):
+def sparsity_accuracy_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
     """
     Creates a sparsity-accuracy plot given a "lottery" type LTH experiment. May be extended to "lottery_branch"
     experiments in the future.
-    This is pretty standard for LTH work and mainly is meant as a sanity check.
+    This is a standard plot for LTH work and mainly is meant as a sanity check.
 
     :param experiment_root_path: string. Root path of a "lottery" type experiment.
     :param eps: int, number of training epochs
@@ -24,7 +24,7 @@ def sparsity_accuracy_plot(experiment_root_path, eps, show_plot=True, save_plot=
     :return: tuple containing the list of sparsities and the list of accuracies. This might be changed in the future
     to work with TikZ.
     """
-    paths = utils.get_file_paths(experiment_root_path, "lottery", eps)
+    paths = utils.get_paths_from_replicate(experiment_root_path, "lottery", eps)
 
     accuracies = []
     sparsities = []
@@ -42,11 +42,10 @@ def sparsity_accuracy_plot(experiment_root_path, eps, show_plot=True, save_plot=
     plt.ylabel("Accuracy")
 
     if save_plot:
-        if experiment_root_path[-1] != "/":
-            experiment_root_path += "/"
-        if not os.path.isdir(experiment_root_path + "plots/"):
-            os.mkdir(experiment_root_path + "plots/")
-        plt.savefig(experiment_root_path + "plots/sparsity_accuracy.png")
+        plot_dir = str(Path(experiment_root_path).parent) + "/plots/"
+        if not os.path.isdir(plot_dir):
+            os.mkdir(plot_dir)
+        plt.savefig(plot_dir + "sparsity_accuracy.png")
     # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
     if show_plot:
         plt.show()
@@ -54,7 +53,7 @@ def sparsity_accuracy_plot(experiment_root_path, eps, show_plot=True, save_plot=
     return sparsities, accuracies
 
 
-def sparsity_neural_persistence_plot(experiment_root_path, eps, show_plot=True, save_plot=False):
+def sparsity_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
     """
     Creates sparsity-neural persistence plots.
 
@@ -68,7 +67,7 @@ def sparsity_neural_persistence_plot(experiment_root_path, eps, show_plot=True, 
     :return: tuple containing the list of sparsities and a list containing the output of tda.PerLayerCalculation() for
     each pruned network.
     """
-    paths = utils.get_file_paths(experiment_root_path, "lottery", eps)
+    paths = utils.get_paths_from_replicate(experiment_root_path, "lottery", eps)
 
     sparsities = []
     for report in paths["sparsity"]:
@@ -96,11 +95,10 @@ def sparsity_neural_persistence_plot(experiment_root_path, eps, show_plot=True, 
     plt.ylabel("Neural Persistence")
 
     if save_plot:
-        if experiment_root_path[-1] != "/":
-            experiment_root_path += "/"
-        if not os.path.isdir(experiment_root_path + "plots/"):
-            os.mkdir(experiment_root_path + "plots/")
-        plt.savefig(experiment_root_path + "plots/sparsity_neural_persistence.png")
+        plot_dir = str(Path(experiment_root_path).parent) + "/plots/"
+        if not os.path.isdir(plot_dir):
+            os.mkdir(plot_dir)
+        plt.savefig(plot_dir + "sparsity_neural_persistence.png")
     # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
     if show_plot:
         plt.show()
@@ -108,7 +106,7 @@ def sparsity_neural_persistence_plot(experiment_root_path, eps, show_plot=True, 
     return sparsities, neural_persistences
 
 
-def accuracy_neural_persistence_plot(experiment_root_path, eps, show_plot=True, save_plot=False):
+def accuracy_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
     """
     Creates accuracy-neural persistence plots.
 
@@ -121,7 +119,7 @@ def accuracy_neural_persistence_plot(experiment_root_path, eps, show_plot=True, 
     :return: tuple containing list of accuracies and list of dicts containing the neural persistences as calculated by
     tda.PerLayerCalculation
     """
-    paths = utils.get_file_paths(experiment_root_path, "lottery", eps)
+    paths = utils.get_paths_from_replicate(experiment_root_path, "lottery", eps)
 
     accuracies = []
     for acc_path in paths["accuracy"]:
@@ -148,11 +146,10 @@ def accuracy_neural_persistence_plot(experiment_root_path, eps, show_plot=True, 
     plt.ylabel("Neural Persistence")
 
     if save_plot:
-        if experiment_root_path[-1] != "/":
-            experiment_root_path += "/"
-        if not os.path.isdir(experiment_root_path + "plots/"):
-            os.mkdir(experiment_root_path + "plots/")
-        plt.savefig(experiment_root_path + "plots/accuracy_neural_persistence.png")
+        plot_dir = str(Path(experiment_root_path).parent) + "/plots/"
+        if not os.path.isdir(plot_dir):
+            os.mkdir(plot_dir)
+        plt.savefig(plot_dir + "/accuracy_neural_persistence.png")
     # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
     if show_plot:
         plt.show()
@@ -161,6 +158,6 @@ def accuracy_neural_persistence_plot(experiment_root_path, eps, show_plot=True, 
 
 
 if __name__ == "__main__":
-    sparsity_accuracy_plot("../experiments/lottery_1db02943c54add91e13635735031a85e/", 2, save_plot=True)
-    sparsity_neural_persistence_plot("../experiments/lottery_1db02943c54add91e13635735031a85e/", 2, save_plot=True)
-    accuracy_neural_persistence_plot("../experiments/lottery_1db02943c54add91e13635735031a85e/", 2, save_plot=True)
+    sparsity_accuracy_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
+    sparsity_neural_persistence_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
+    accuracy_neural_persistence_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)

@@ -30,13 +30,13 @@ def setup_simplified_lottery_experiment():
                "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/mask.pth")
 
 
-class TestSparsityAccuracy(unittest.TestCase):
+class TestSparsityAccuracyReplicate(unittest.TestCase):
     def test_sparsity_acc(self):
         expected_accuracies = [0.9644, 0.9678]
         expected_sparsities = [1.0, 212959.0/266200.0]
 
-        sparsities, accuracies = experiment.sparsity_accuracy_plot("./resources/test_plots/lottery_simplified", 2,
-                                                                   show_plot=False, save_plot=False)
+        sparsities, accuracies = experiment.sparsity_accuracy_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
+                                                                             show_plot=False, save_plot=False)
         self.assertEqual(expected_sparsities, sparsities)
         self.assertEqual(expected_accuracies, accuracies)
 
@@ -46,12 +46,12 @@ class TestSparsityAccuracy(unittest.TestCase):
 
         assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/sparsity_accuracy.png")
 
-        _, _ = experiment.sparsity_accuracy_plot("./resources/test_plots/lottery_simplified", 2, show_plot=False,
-                                                 save_plot=True)
+        _, _ = experiment.sparsity_accuracy_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
+                                                           show_plot=False, save_plot=True)
         self.assertTrue(os.path.isfile("./resources/test_plots/lottery_simplified/plots/sparsity_accuracy.png"))
 
 
-class TestSparsityNeuralPersistence(unittest.TestCase):
+class TestSparsityNeuralPersistenceReplicate(unittest.TestCase):
     def test_sparsity_np(self):
         setup_simplified_lottery_experiment()
 
@@ -65,8 +65,8 @@ class TestSparsityNeuralPersistence(unittest.TestCase):
 
         expected_sparsities = [1.0, 212959.0/266200.0]
 
-        sparsities, neural_pers = experiment.sparsity_neural_persistence_plot(
-            "./resources/test_plots/lottery_simplified", 2)
+        sparsities, neural_pers = experiment.sparsity_neural_persistence_plot_replicate(
+            "./resources/test_plots/lottery_simplified/replicate_1", 2)
 
         self.assertEqual(expected_sparsities, sparsities)
         self.assertDictEqual(per_layer_calc(expected_dict_level_0), neural_pers[0])
@@ -78,13 +78,13 @@ class TestSparsityNeuralPersistence(unittest.TestCase):
 
         assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png")
 
-        _, _ = experiment.sparsity_neural_persistence_plot("./resources/test_plots/lottery_simplified", 2,
-                                                           show_plot=False, save_plot=True)
+        _, _ = experiment.sparsity_neural_persistence_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
+                                                                     show_plot=False, save_plot=True)
         self.assertTrue(os.path.isfile(
             "./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png"))
 
 
-class TestAccuracyNeuralPersistence(unittest.TestCase):
+class TestAccuracyNeuralPersistenceReplicate(unittest.TestCase):
     def test_acc_np(self):
         correct_eps = 2
         expected_accuracies = [0.9644, 0.9678]
@@ -99,8 +99,8 @@ class TestAccuracyNeuralPersistence(unittest.TestCase):
                                              ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
         per_layer_calc = PerLayerCalculation()
 
-        accuracies, neural_pers = experiment.accuracy_neural_persistence_plot(
-            "./resources/test_plots/lottery_simplified", correct_eps, show_plot=False, save_plot=False)
+        accuracies, neural_pers = experiment.accuracy_neural_persistence_plot_replicate(
+            "./resources/test_plots/lottery_simplified/replicate_1", correct_eps, show_plot=False, save_plot=False)
 
         self.assertEqual(expected_accuracies, accuracies)
 
@@ -113,8 +113,8 @@ class TestAccuracyNeuralPersistence(unittest.TestCase):
 
         assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png")
 
-        _, _ = experiment.accuracy_neural_persistence_plot("./resources/test_plots/lottery_simplified", 2,
-                                                           show_plot=False, save_plot=True)
+        _, _ = experiment.accuracy_neural_persistence_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
+                                                                     show_plot=False, save_plot=True)
         self.assertTrue(os.path.isfile(
             "./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png"))
 
