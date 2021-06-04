@@ -168,6 +168,14 @@ def get_paths_from_experiment(base_path, experiment_type, eps):
         raise ValueError("The type {} is not a valid experiment type. Possible types are 'lottery', 'lottery_branch' "
                          "and 'train'.".format(experiment_type))
 
+    # todo this will be refactored anyway, but it's super inelegant atm. eigentlich reicht es auch, die anzahl der levels abzufragen.
+    expected_lengths = {key: len(paths["replicate_1"][key]) for key in paths["replicate_1"].keys()}
+    for replicate in paths.keys():
+        for key in expected_lengths.keys():
+            assert len(paths[replicate][key]) == expected_lengths[key], \
+                "The number of pruning levels in replicate {} differs from the number of pruning levels in the first " \
+                "replicate. Error found in the extraction of these paths: {}: {} and replicate_1: {}."\
+                .format(replicate, replicate, paths[replicate][key], paths["replicate_1"][key])
     return paths
 
 

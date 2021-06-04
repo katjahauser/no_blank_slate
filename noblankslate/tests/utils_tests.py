@@ -140,6 +140,7 @@ class TestGetPathsFromReplicate(unittest.TestCase):
 
 
 class TestGetPathsFromExperiment(unittest.TestCase):
+    # todo add check that all experiments have the same number of pruning steps
     def test_loading_lottery_paths(self):
         # the directory behind lottery_path contains a placeholder for the plot directory to test that these paths are
         # not considered
@@ -175,6 +176,11 @@ class TestGetPathsFromExperiment(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             utils.get_paths_from_experiment("resources/test_get_paths_from_experiment/lottery_branch_placeholder",
                                             "lottery_branch", -1)
+
+    def test_raises_when_unequal_number_of_pruning_steps(self):
+        with self.assertRaises(AssertionError):
+            utils.get_paths_from_experiment(
+                "./resources/test_get_paths_from_experiment/lottery_w_different_pruning_levels", "lottery", 2)
 
     def test_invalid_inputs(self):
         valid_path = "resources/test_get_paths_from_experiment/lottery_1db02943c54add91e13635735031a85e"
