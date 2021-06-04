@@ -212,6 +212,86 @@ def sparsity_accuracy_plot_experiment(root_path, eps, show_plot=True, save_plot=
     return sparsities, means, stds
 
 
+def sparsity_neural_persistence_plot_experiment(root_path, eps, show_plot=True, save_plot=False):
+    """
+    Creates sparsity-neural persistence plots for an openLTH experiment with several replicates.
+    Sanity check for making sure that all experiments share the same sparsity level are included.
+
+    :param root_path: experiment root directory, i.e. the directory in which the replicate live and in which the plots
+    directory will be created.
+    :param eps: number of training epochs
+    :param show_plot: bool, default: True, shows plot
+    :param save_plot: bool, default: False, saves plot to root_path/plots/sparsity_neural_persistence_experiment.png
+    :return: three lists, the first list is a list of floats (sparsities), the second and third are lists of dicts
+    in the format {layer_name: mean_normalized_persistence, ..., global:mean_normalized_global_persistence} and
+    {layer_name: std_dev_normalized_persistence, ..., global:std_dev_normalized_global_persistence} respectively.
+    """
+
+    paths = utils.get_paths_from_experiment(root_path, "lottery", eps)
+
+    sparsities = [utils.load_sparsity(spars) for spars in paths["replicate_1"]["sparsity"]]
+
+    for replicate in paths.keys():
+        if replicate != "replicate_1":
+            sparsities_to_be_checked = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+            assert sparsities_to_be_checked == sparsities, \
+                "The sparsities in replicate {} differ from the sparsities in the first replicate. {} and {} " \
+                "respectively. Make sure you did not mix any experiments.".format(replicate, sparsities_to_be_checked,
+                                                                                  sparsities)
+
+    neural_persistences_raw = [[] for _ in range(len(sparsities))]
+    neural_pers_calc = PerLayerCalculation()
+
+    for replicate in paths.keys():
+        for i, (end_model_path, mask_path) in enumerate(paths[replicate]["model_end"]):
+            if mask_path is None:
+                neural_persistences_raw[i].append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
+            else:
+                neural_persistences_raw[i].append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
+
+    mean_neural_persistences = []
+    std_neural_persistences = []
+    means_for_plotting = [[] for _ in range(len(neural_persistences_raw[0][0].keys()))]
+    stds_for_plotting = [[] for _ in range(len(neural_persistences_raw[0][0].keys()))]
+
+    for neural_persistences_in_one_level in neural_persistences_raw:
+        neural_persistence_array = np.zeros((len(neural_persistences_raw[0]), len(neural_persistences_raw[0][0].keys())))
+        for i, neural_pers in enumerate(neural_persistences_in_one_level):
+            for j, layer_key in enumerate(neural_pers.keys()):
+                for persistence_key in neural_pers[layer_key].keys():
+                    if "normalized" in persistence_key:
+                        neural_persistence_array[i, j] = neural_pers[layer_key][persistence_key]
+
+        mean_nps = np.mean(neural_persistence_array, axis=0)
+        std_nps = np.std(neural_persistence_array, axis=0)
+
+        mean_neural_persistences.append({key: mean_nps[i] for i, key in enumerate(neural_persistences_raw[0][0].keys())})
+        std_neural_persistences.append({key: std_nps[i] for i, key in enumerate(neural_persistences_raw[0][0].keys())})
+        for i in range(len(mean_nps)):
+            means_for_plotting[i].append(mean_nps[i])
+            stds_for_plotting[i].append(std_nps[i])
+
+    _, p = plt.subplots(1, 1)
+    for i in range(len(means_for_plotting)):
+        p.errorbar(sparsities, means_for_plotting[i], stds_for_plotting[i])
+    p.invert_xaxis()
+    plt.title("Sparsity-Neural Persistence over {} runs".format(len(paths.keys())))
+    plt.xlabel("Sparsity")
+    plt.ylabel("Neural Persistence")
+
+    if save_plot:
+        if root_path[-1] != "/":
+            root_path = root_path + "/"
+        if not os.path.isdir(root_path + "plots/"):
+            os.mkdir(root_path + "plots/")
+        plt.savefig(root_path + "plots/sparsity_neural_persistence_experiment.png")
+    # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
+    if show_plot:
+        plt.show()
+
+    return sparsities, mean_neural_persistences, std_neural_persistences
+
+
 if __name__ == "__main__":
     sparsity_accuracy_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
     sparsity_neural_persistence_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)

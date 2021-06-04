@@ -151,5 +151,58 @@ class TestSparsityAccuracyExperiment(unittest.TestCase):
             "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png"))
 
 
+class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
+    def test_sparsity_np(self):
+        expected_sparsities = [1.0, 212959.0/266200.0]
+
+        expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
+                                                                                  [-1., -1., -1., -1.]]).numpy()),
+                                             ('fc.weight', torch.tensor([[-1., -1.], [-1., -1.]]).numpy())])
+        expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
+                                                                                  [0., -1., -1., 0.]]).numpy()),
+                                             ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
+        per_layer_calc = PerLayerCalculation()
+
+        expected_np_lvl_0 = per_layer_calc(expected_dict_level_0)
+        expected_np_lvl_1 = per_layer_calc(expected_dict_level_1)
+        expected_mean_np_lvl_0 = {layer_key: expected_np_lvl_0[layer_key][persistence_key] for layer_key in
+                                  expected_np_lvl_0.keys()
+                                  for persistence_key in expected_np_lvl_0[layer_key].keys()
+                                  if "normalized" in persistence_key}
+        expected_mean_np_lvl_1 = {layer_key: expected_np_lvl_1[layer_key][persistence_key] for layer_key in
+                                  expected_np_lvl_1.keys()
+                                  for persistence_key in expected_np_lvl_1[layer_key].keys()
+                                  if "normalized" in persistence_key}
+
+        expected_std_np_lvl_0 = {key: 0.0 for key in expected_np_lvl_0.keys()}
+        expected_std_np_lvl_1 = {key: 0.0 for key in expected_np_lvl_1.keys()}
+
+        sparsities, mean_nps, std_nps = experiment.sparsity_neural_persistence_plot_experiment(
+            "./resources/test_plots/lottery_simplified_experiment/", 2)
+
+        self.assertEqual(expected_sparsities, sparsities)
+        self.assertEqual(expected_mean_np_lvl_0, mean_nps[0])
+        self.assertEqual(expected_mean_np_lvl_1, mean_nps[1])
+        self.assertEqual(expected_std_np_lvl_0, std_nps[0])
+        self.assertEqual(expected_std_np_lvl_1, std_nps[1])
+
+    def test_equal_sparsity_lengths(self):
+        with self.assertRaises(AssertionError):
+            experiment.sparsity_neural_persistence_plot_experiment(
+                "./resources/test_plots/lottery_simplified_experiment_unequal_sparsities", 2)
+
+    def test_save_plot(self):
+        if os.path.isfile("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png"):
+            os.remove("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png")
+
+        assert not os.path.exists(
+            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png")
+
+        _, _, _ = experiment.sparsity_neural_persistence_plot_experiment(
+            "./resources/test_plots/lottery_simplified_experiment/", 2, show_plot=False, save_plot=True)
+        self.assertTrue(os.path.isfile(
+            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png"))
+
+
 if __name__ == '__main__':
     unittest.main()
