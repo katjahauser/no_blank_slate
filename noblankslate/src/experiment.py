@@ -276,6 +276,7 @@ def sparsity_neural_persistence_plot_experiment(root_path, eps, show_plot=True, 
         p.errorbar(sparsities, means_for_plotting[i], stds_for_plotting[i])
     p.invert_xaxis()
     plt.title("Sparsity-Neural Persistence over {} runs".format(len(paths.keys())))
+    plt.legend()
     plt.xlabel("Sparsity")
     plt.ylabel("Neural Persistence")
 
