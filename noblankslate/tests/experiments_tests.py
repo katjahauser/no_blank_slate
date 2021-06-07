@@ -227,7 +227,17 @@ class TestAccuracyNPPlotExperiment(unittest.TestCase):
         for i in range(len(expected_neural_persistences)):
             self.assertDictEqual(expected_neural_persistences[i], neural_persistences[i])
 
+    def test_accuracy_NP_plot(self):
+        if os.path.isfile("./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png"):
+            os.remove("./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png")
 
+        assert not os.path.exists(
+            "./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png")
+
+        _, _ = experiment.accuracy_neural_persistence_plot_experiment(
+            "./resources/test_plots/lottery_simplified_experiment/", 2, show_plot=False, save_plot=True)
+        self.assertTrue(os.path.isfile(
+            "./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png"))
 
 
 if __name__ == '__main__':
