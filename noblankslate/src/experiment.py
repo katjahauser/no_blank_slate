@@ -292,6 +292,25 @@ def sparsity_neural_persistence_plot_experiment(root_path, eps, show_plot=True, 
     return sparsities, mean_neural_persistences, std_neural_persistences
 
 
+def accuracy_neural_persistence_plot_experiment(root_path, eps):
+    paths = utils.get_paths_from_experiment(root_path, "lottery", eps)
+    accuracies = []
+    neural_pers_calc = PerLayerCalculation()
+    neural_persistences = []
+
+    for replicate in paths.keys():
+        for accuracy_path in paths[replicate]["accuracy"]:
+            accuracies.append(utils.load_accuracy(accuracy_path))
+        for end_model_path in paths[replicate]["model_end"]:
+            if end_model_path[1] is None:
+                neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path[0])))
+            else:
+                neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path[0],
+                                                                                      end_model_path[1])))
+
+    return accuracies, neural_persistences
+
+
 if __name__ == "__main__":
     sparsity_accuracy_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
     sparsity_neural_persistence_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)

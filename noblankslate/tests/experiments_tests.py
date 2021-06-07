@@ -204,5 +204,31 @@ class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
             "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png"))
 
 
+class TestAccuracyNPPlotExperiment(unittest.TestCase):
+    def test_accuracy_NP_experiment(self):
+        expected_accuracies = [0.9644, 0.9678, 0.9544, 0.9878]
+
+        expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
+                                                                                  [-1., -1., -1., -1.]]).numpy()),
+                                             ('fc.weight', torch.tensor([[-1., -1.], [-1., -1.]]).numpy())])
+        expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
+                                                                                  [0., -1., -1., 0.]]).numpy()),
+                                             ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
+        per_layer_calc = PerLayerCalculation()
+
+        expected_np_lvl_0 = per_layer_calc(expected_dict_level_0)
+        expected_np_lvl_1 = per_layer_calc(expected_dict_level_1)
+        expected_neural_persistences = [expected_np_lvl_0, expected_np_lvl_1, expected_np_lvl_0, expected_np_lvl_1]
+
+        accuracies, neural_persistences = experiment.accuracy_neural_persistence_plot_experiment(
+            "./resources/test_plots/lottery_simplified_experiment/", 2)
+
+        self.assertEqual(expected_accuracies, accuracies)
+        for i in range(len(expected_neural_persistences)):
+            self.assertDictEqual(expected_neural_persistences[i], neural_persistences[i])
+
+
+
+
 if __name__ == '__main__':
     unittest.main()
