@@ -176,7 +176,7 @@ def sparsity_accuracy_plot_experiment(root_path, eps, show_plot=True, save_plot=
     """
 
     paths = utils.get_paths_from_experiment(root_path, "lottery", eps)
-    accuracies = np.ones((len(paths["replicate_1"]["accuracy"]), len(paths.keys()))) * (-1)
+    accuracies = np.ones((len(paths.keys()), len(paths["replicate_1"]["accuracy"]))) * (-1)
     for i, replicate in enumerate(paths.keys()):
         accuracies[i] = [utils.load_accuracy(acc) for acc in paths[replicate]["accuracy"]]
     means = list(np.mean(accuracies, axis=0))
@@ -352,6 +352,6 @@ def accuracy_neural_persistence_plot_experiment(experiment_root_path, eps, show_
 
 
 if __name__ == "__main__":
-    sparsity_accuracy_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
-    sparsity_neural_persistence_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
-    accuracy_neural_persistence_plot_replicate("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
+    sparsity_accuracy_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
+    sparsity_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
+    accuracy_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
