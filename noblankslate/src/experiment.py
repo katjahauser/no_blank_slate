@@ -8,6 +8,7 @@ from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.utils as utils
 
 
+
 # plots:
 # * NP of mask vs NP of masked weights
 # todo add replicates to replicate plotting function save paths
@@ -36,9 +37,9 @@ def sparsity_accuracy_plot_replicate(experiment_root_path, eps, show_plot=True, 
     for report_path in paths["sparsity"]:
         sparsities.append(utils.load_sparsity(report_path))
 
-    _, p = plt.subplots(1, 1)
-    p.plot(sparsities, accuracies)
-    p.invert_xaxis()
+    _, ax = plt.subplots(1, 1)
+    ax.plot(sparsities, accuracies)
+    ax.invert_xaxis()
     plt.title("Sparsity-Accuracy")
     plt.xlabel("Sparsity")
     plt.ylabel("Accuracy")
@@ -353,6 +354,6 @@ def accuracy_neural_persistence_plot_experiment(experiment_root_path, eps, show_
 
 
 if __name__ == "__main__":
-    sparsity_accuracy_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
-    sparsity_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
-    accuracy_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, save_plot=True)
+    sparsity_accuracy_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, show_plot=False, save_plot=True)
+    sparsity_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, show_plot=False, save_plot=True)
+    accuracy_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, show_plot=False, save_plot=True)
