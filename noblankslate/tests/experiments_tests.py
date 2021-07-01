@@ -2,37 +2,28 @@ from collections import OrderedDict
 import os.path
 import unittest
 
-import matplotlib.pyplot
 import numpy as np
 import torch
 
 from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.experiment as experiment
-from utils_tests import TestModel
+from utils_tests import TestModel, generate_expected_paths_for_lottery_single_replicate_with_2_eps
 
 
 show_plot_off_for_fast_tests = False
 
 
-def setup_simplified_lottery_experiment():
-    model = TestModel([2], outputs=2)
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep0_it0.pth")
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep2_it0.pth")
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep0_it0.pth")
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep2_it0.pth")
+class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
+    def test_get_paths(self):
+        lottery_path = "resources/test_get_paths_from_replicate/lottery_1db02943c54add91e13635735031a85e/replicate_1/"
+        expected_result = generate_expected_paths_for_lottery_single_replicate_with_2_eps(lottery_path)
+        correct_num_epochs = 2
+        sparsity_accuracy_single_replicate_handler = \
+            experiment.SparsityAccuracyOnSingleReplicateHandler(lottery_path, correct_num_epochs)
 
-    mask_level_0 = {'fc_layers.0.weight': torch.tensor([[1., 1., 1., 1.], [1., 1., 1., 1.]]),
-                    'fc.weight': torch.tensor([[1., 1.], [1., 1.]])}
-    mask_level_1 = {'fc_layers.0.weight': torch.tensor([[1., 0., 1., 0.], [0., 1., 1., 0.]]),
-                    'fc.weight': torch.tensor([[0., 0.], [1., 1.]])}
-    torch.save({k: v.int() for k, v in mask_level_0.items()},
-               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/mask.pth")
-    torch.save({k: v.int() for k, v in mask_level_1.items()},
-               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/mask.pth")
+        actual_results = sparsity_accuracy_single_replicate_handler.get_paths()
+
+        self.assertDictEqual(expected_result, actual_results)
 
 
 class TestSparsityAccuracyReplicate(unittest.TestCase):
@@ -87,6 +78,27 @@ class TestSparsityNeuralPersistenceReplicate(unittest.TestCase):
                                                                      show_plot=show_plot_off_for_fast_tests, save_plot=True)
         self.assertTrue(os.path.isfile(
             "./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png"))
+
+
+def setup_simplified_lottery_experiment():
+    model = TestModel([2], outputs=2)
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep0_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep2_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep0_it0.pth")
+    torch.save(OrderedDict(model.named_parameters()),
+               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep2_it0.pth")
+
+    mask_level_0 = {'fc_layers.0.weight': torch.tensor([[1., 1., 1., 1.], [1., 1., 1., 1.]]),
+                    'fc.weight': torch.tensor([[1., 1.], [1., 1.]])}
+    mask_level_1 = {'fc_layers.0.weight': torch.tensor([[1., 0., 1., 0.], [0., 1., 1., 0.]]),
+                    'fc.weight': torch.tensor([[0., 0.], [1., 1.]])}
+    torch.save({k: v.int() for k, v in mask_level_0.items()},
+               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/mask.pth")
+    torch.save({k: v.int() for k, v in mask_level_1.items()},
+               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/mask.pth")
 
 
 class TestAccuracyNeuralPersistenceReplicate(unittest.TestCase):

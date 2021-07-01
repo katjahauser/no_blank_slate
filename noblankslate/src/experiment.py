@@ -7,11 +7,38 @@ import numpy as np
 from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.utils as utils
 
-
-
 # plots:
 # * NP of mask vs NP of masked weights
 # todo add replicates to replicate plotting function save paths
+
+
+class SparsityAccuracyOnSingleReplicateHandler:
+    def __init__(self, experiment_root_path, eps):
+        self.experiment_root_path = experiment_root_path
+        self.epochs = eps
+
+    def evaluate_experiment(self):
+        self.prepare_data_for_plotting()
+        self.generate_plot()
+        # boolean for show and save plot
+
+    def prepare_data_for_plotting(self):
+        # get paths, load acc and sparsity
+        pass
+
+    def get_paths(self):
+        return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
+
+    def load_accuracies(self):
+        pass
+
+    def load_sparsities(self):
+        pass
+
+    def generate_plot(self):
+        # call makeplot from respective plotter
+        pass
+
 
 def sparsity_accuracy_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
     """
