@@ -71,6 +71,7 @@ class PlotterBaseClass(metaclass=abc.ABCMeta):
             plt.show()
 
 
+# todo add functionality to deal with several replicates (i.e. take custom names)
 class ReplicatePathHandler:
     @staticmethod
     def prepare_plot_dir(experiment_root):

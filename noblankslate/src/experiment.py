@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from deps.neural_persistence.src.tda import PerLayerCalculation
+import src.plotters as plotters
 import src.utils as utils
 
 # plots:
@@ -15,7 +16,18 @@ import src.utils as utils
 class SparsityAccuracyOnSingleReplicateHandler:
     def __init__(self, experiment_root_path, eps):
         self.experiment_root_path = experiment_root_path
+        self.raise_if_no_valid_epoch(eps)
         self.epochs = eps
+        self.sparsities = []
+        self.accuracies = []
+        self.plotter = None
+
+    @staticmethod
+    def raise_if_no_valid_epoch(epochs):
+        if epochs <= 0:
+            raise ValueError("There must be more than 0 epochs. You provided {}.".format(str(epochs)))
+        if type(epochs) is not int:
+            raise ValueError("Epochs must be an integer. You provided {}.".format(str(epochs)))
 
     def evaluate_experiment(self):
         self.prepare_data_for_plotting()
@@ -23,21 +35,28 @@ class SparsityAccuracyOnSingleReplicateHandler:
         # boolean for show and save plot
 
     def prepare_data_for_plotting(self):
-        # get paths, load acc and sparsity
-        pass
+        paths = self.get_paths()
+        self.load_sparsities(paths)
+        self.load_accuracies(paths)
 
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
-    def load_accuracies(self):
-        pass
+    def load_sparsities(self, paths):
+        sparsities = []
+        for report_path in paths["sparsity"]:
+            sparsities.append(utils.load_sparsity(report_path))
+        self.sparsities = sparsities
 
-    def load_sparsities(self):
-        pass
+    def load_accuracies(self, paths):
+        accuracies = []
+        for logger_path in paths["accuracy"]:
+            accuracies.append(utils.load_accuracy(logger_path))
+        self.accuracies = accuracies
 
     def generate_plot(self):
-        # call makeplot from respective plotter
-        pass
+        self.plotter = plotters.SparsityAccuracyReplicatePlotter()
+        self.plotter.make_plot(self.sparsities, self.accuracies)
 
 
 def sparsity_accuracy_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
