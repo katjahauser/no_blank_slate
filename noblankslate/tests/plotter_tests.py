@@ -3,6 +3,7 @@ import unittest
 
 import matplotlib.axes
 import matplotlib.figure
+import matplotlib.pyplot as plt
 import numpy as np
 
 import src.plotters as plotters
@@ -26,7 +27,7 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
         self.assertEqual("Accuracy", plotter.y_label)
         self.assertEqual(None, plotter.axis)
         self.assertEqual(None, plotter.figure)
-        self.assertEqual("sparsity_accuracy_replicate_plot.jpg", plotter.save_file_name)
+        self.assertEqual("sparsity_accuracy_replicate_plot.png", plotter.save_file_name)
 
     def test_setup_figure_and_axis(self):
         plotter = plotters.SparsityAccuracyReplicatePlotter()
@@ -58,7 +59,7 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
         self.assertEqual("Accuracy", plotter.axis.get_ylabel())
 
     def test_save_plot(self):
-        test_path = "resources/test_plots/plots/sparsity_accuracy_replicate_plot.jpg"
+        test_path = "resources/test_plots/plots/sparsity_accuracy_replicate_plot.png"
         if os.path.exists(test_path):
             os.remove(test_path)
         assert not os.path.exists(test_path)
@@ -88,6 +89,16 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             plotter.show_plot()
+
+    def test_deletion(self):
+        plotter = plotters.SparsityAccuracyReplicatePlotter()
+        plotter.setup_figure_and_axis()
+        # only one figure exists -- this is relevant, if the test suit runs several tests in parallel
+        assert(len(plt.get_fignums()) == 1)
+
+        plotter.__del__()
+
+        self.assertFalse(plt.get_fignums())  # an empty list is cast to False by convention
 
 
 class TestReplicatePathHandler(unittest.TestCase):

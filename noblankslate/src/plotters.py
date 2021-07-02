@@ -70,6 +70,12 @@ class PlotterBaseClass(metaclass=abc.ABCMeta):
         else:
             plt.show()
 
+    def __del__(self):
+        # When I ran a test suit for an object that contains a derivative of PlotterBaseClass I got more open plots
+        # than expected when running the full suit, but not when running the tests individually. This destructor fixes
+        # the issue.
+        plt.close(self.figure)
+
 
 # todo add functionality to deal with several replicates (i.e. take custom names)
 class ReplicatePathHandler:
@@ -96,7 +102,7 @@ class SparsityAccuracyReplicatePlotter(PlotterBaseClass):
     y_label = "Accuracy"
     axis = None
     figure = None
-    save_file_name = "sparsity_accuracy_replicate_plot.jpg"
+    save_file_name = "sparsity_accuracy_replicate_plot.png"
 
     def plot_data(self, axis, sparsities, accuracies):
         axis.plot(sparsities, accuracies)
