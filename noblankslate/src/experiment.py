@@ -29,10 +29,13 @@ class SparsityAccuracyOnSingleReplicateHandler:
         if type(epochs) is not int:
             raise ValueError("Epochs must be an integer. You provided {}.".format(str(epochs)))
 
-    def evaluate_experiment(self):
+    def evaluate_experiment(self, show_plot, save_plot):
         self.prepare_data_for_plotting()
         self.generate_plot()
-        # boolean for show and save plot
+        if show_plot:
+            self.plotter.show_plot()
+        if save_plot:
+            self.plotter.save_plot(self.experiment_root_path)
 
     def prepare_data_for_plotting(self):
         paths = self.get_paths()
@@ -57,49 +60,6 @@ class SparsityAccuracyOnSingleReplicateHandler:
     def generate_plot(self):
         self.plotter = plotters.SparsityAccuracyReplicatePlotter()
         self.plotter.make_plot(self.sparsities, self.accuracies)
-
-
-def sparsity_accuracy_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
-    """
-    Creates a sparsity-accuracy plot given a "lottery" type LTH experiment. May be extended to "lottery_branch"
-    experiments in the future.
-    This is a standard plot for LTH work and mainly is meant as a sanity check.
-
-    :param experiment_root_path: string. Root path of a "lottery" type experiment.
-    :param eps: int, number of training epochs
-    :param show_plot: bool, default: True, controls showing of plot
-    :param save_plot: bool, default: False, controls saving of plot. The plot will be saved to
-    experiment_root_path/plots/sporsity-accuracy.png
-    :return: tuple containing the list of sparsities and the list of accuracies. This might be changed in the future
-    to work with TikZ.
-    """
-    paths = utils.get_paths_from_replicate(experiment_root_path, "lottery", eps)
-
-    accuracies = []
-    sparsities = []
-
-    for logger_path in paths["accuracy"]:
-        accuracies.append(utils.load_accuracy(logger_path))
-    for report_path in paths["sparsity"]:
-        sparsities.append(utils.load_sparsity(report_path))
-
-    _, ax = plt.subplots(1, 1)
-    ax.plot(sparsities, accuracies)
-    ax.invert_xaxis()
-    plt.title("Sparsity-Accuracy")
-    plt.xlabel("Sparsity")
-    plt.ylabel("Accuracy")
-
-    if save_plot:
-        plot_dir = str(Path(experiment_root_path).parent) + "/plots/"
-        if not os.path.isdir(plot_dir):
-            os.mkdir(plot_dir)
-        plt.savefig(plot_dir + "sparsity_accuracy.png")
-    # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
-    if show_plot:
-        plt.show()
-
-    return sparsities, accuracies
 
 
 def sparsity_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):

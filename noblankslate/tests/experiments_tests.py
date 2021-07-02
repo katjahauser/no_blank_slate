@@ -15,6 +15,8 @@ from utils_tests import TestModel, generate_expected_paths_for_lottery_single_re
 
 show_plot_off_for_fast_tests = False
 
+show_no_plots_for_automated_tests = True
+
 
 class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
     def test_initialization(self):
@@ -61,9 +63,9 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
     def test_get_paths(self):
         lottery_path = "resources/test_get_paths_from_replicate/lottery_1db02943c54add91e13635735031a85e/replicate_1/"
         expected_result = generate_expected_paths_for_lottery_single_replicate_with_2_eps(lottery_path)
-        correct_num_epochs = 2
+        num_epochs = 2
         sparsity_accuracy_single_replicate_handler = \
-            experiment.SparsityAccuracyOnSingleReplicateHandler(lottery_path, correct_num_epochs)
+            experiment.SparsityAccuracyOnSingleReplicateHandler(lottery_path, num_epochs)
 
         actual_results = sparsity_accuracy_single_replicate_handler.get_paths()
 
@@ -71,10 +73,10 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
 
     def test_load_sparsities(self):
         expected_sparsities = [1.0, 212959.0/266200.0]
-        correct_num_epochs = 2
+        num_epochs = 2
         sparsity_accuracy_single_replicate_handler = \
             experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                correct_num_epochs)
+                                                                num_epochs)
         paths = sparsity_accuracy_single_replicate_handler.get_paths()
 
         sparsity_accuracy_single_replicate_handler.load_sparsities(paths)
@@ -83,10 +85,10 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
 
     def test_load_accuracies(self):
         expected_accuracies = [0.9644, 0.9678]
-        correct_num_epochs = 2
+        num_epochs = 2
         sparsity_accuracy_single_replicate_handler = \
             experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                correct_num_epochs)
+                                                                num_epochs)
         paths = sparsity_accuracy_single_replicate_handler.get_paths()
 
         sparsity_accuracy_single_replicate_handler.load_accuracies(paths)
@@ -96,10 +98,10 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
     def test_prepare_data_for_plotting(self):
         expected_sparsities = [1.0, 212959.0/266200.0]
         expected_accuracies = [0.9644, 0.9678]
-        correct_num_epochs = 2
+        num_epochs = 2
         sparsity_accuracy_single_replicate_handler = \
             experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                correct_num_epochs)
+                                                                num_epochs)
         assert sparsity_accuracy_single_replicate_handler.sparsities == [] and \
                sparsity_accuracy_single_replicate_handler.accuracies == []
 
@@ -109,10 +111,10 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
         self.assertEqual(expected_accuracies, sparsity_accuracy_single_replicate_handler.accuracies)
 
     def test_generate_plot(self):
-        correct_num_epochs = 2
+        num_epochs = 2
         sparsity_accuracy_single_replicate_handler = \
             experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                correct_num_epochs)
+                                                                num_epochs)
 
         sparsity_accuracy_single_replicate_handler.generate_plot()
 
@@ -124,8 +126,74 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
                                    matplotlib.axes.SubplotBase))
         self.assertTrue(isinstance(sparsity_accuracy_single_replicate_handler.plotter.figure, matplotlib.figure.Figure))
 
-    #def test_evaluate_experiment(self):
-    # todo continue here -- split into 4 tests, since 2 boolean flags need to be added (4ish tests since 2 involve showing a figure)
+    def test_evaluate_experiment_show_and_save(self):
+        if not show_no_plots_for_automated_tests:
+            num_epochs = 2
+            handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+                "./resources/test_plots/lottery_simplified/replicate_1", num_epochs)
+            target_file = \
+                "./resources/test_plots/lottery_simplified/plots/sparsity_accuracy_replicate_plot.png"
+            remove_target_file_if_exists(target_file)
+            assert not os.path.exists(target_file)
+
+            handler.evaluate_experiment(show_plot=True, save_plot=True)
+
+            self.assertTrue(os.path.exists(target_file))
+            self.assertTrue(isinstance(handler.plotter.axis, matplotlib.axes.SubplotBase))
+            self.assertTrue(isinstance(handler.plotter.figure, matplotlib.figure.Figure))
+        else:
+            print("Ignoring TestSparsityAccuracyOnSingleReplicateHandler.test_evaluate_experiment_show_and_save to "
+                  "allow automated testing.")
+
+    def test_evaluate_experiment_show_but_no_save(self):
+        if not show_no_plots_for_automated_tests:
+            num_epochs = 2
+            handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+                "./resources/test_plots/lottery_simplified/replicate_1", num_epochs)
+            target_file = \
+                "./resources/test_plots/lottery_simplified/plots/sparsity_accuracy_replicate_plot.png"
+            remove_target_file_if_exists(target_file)
+            assert not os.path.exists(target_file)
+
+            handler.evaluate_experiment(show_plot=True, save_plot=False)
+
+            self.assertFalse(os.path.exists(target_file))
+            self.assertTrue(isinstance(handler.plotter.axis, matplotlib.axes.SubplotBase))
+            self.assertTrue(isinstance(handler.plotter.figure, matplotlib.figure.Figure))
+        else:
+            print("Ignoring TestSparsityAccuracyOnSingleReplicateHandler.test_evaluate_experiment_show_but_no_save to "
+                  "allow automated testing.")
+
+    def test_evaluate_experiment_no_show_but_save(self):
+        num_epochs = 2
+        handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+            "./resources/test_plots/lottery_simplified/replicate_1", num_epochs)
+        target_file = \
+            "./resources/test_plots/lottery_simplified/plots/sparsity_accuracy_replicate_plot.png"
+        remove_target_file_if_exists(target_file)
+        assert not os.path.exists(target_file)
+
+        handler.evaluate_experiment(show_plot=False, save_plot=True)
+
+        self.assertTrue(os.path.exists(target_file))
+
+    def test_evaluate_experiment_no_show_no_save(self):
+        num_epochs = 2
+        handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+            "./resources/test_plots/lottery_simplified/replicate_1", num_epochs)
+        target_file = \
+            "./resources/test_plots/lottery_simplified/plots/sparsity_accuracy_replicate_plot.png"
+        remove_target_file_if_exists(target_file)
+        assert not os.path.exists(target_file)
+
+        handler.evaluate_experiment(show_plot=False, save_plot=False)
+
+        self.assertFalse(os.path.exists(target_file))
+
+
+def remove_target_file_if_exists(target_file):
+    if os.path.exists(target_file):
+        os.remove(target_file)
 
 
 class TestSparsityAccuracyReplicate(unittest.TestCase):
