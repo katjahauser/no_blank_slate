@@ -20,7 +20,9 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
         return (hasattr(subclass, 'load_x_data') and
                 callable(subclass.load_x_data) and
                 hasattr(subclass, 'load_y_data') and
-                callable(subclass.load_y_data))
+                callable(subclass.load_y_data) and
+                hasattr(subclass, 'get_plotter') and
+                callable(subclass.get_plotter))
 
     def __init__(self, experiment_root_path, eps):
         self.experiment_root_path = experiment_root_path
@@ -28,7 +30,6 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
         self.epochs = eps
         self.x_data = []
         self.y_data = []
-        self.plotter = None
 
     @staticmethod
     def raise_if_no_valid_epoch(epochs):
@@ -39,11 +40,12 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
 
     def evaluate_experiment(self, show_plot, save_plot):
         self.load_data()
-        self.generate_plot()
+        plotter = self.get_plotter()
+        self.generate_plot(plotter)
         if show_plot:
-            self.plotter.show_plot()
+            plotter.show_plot()
         if save_plot:
-            self.plotter.save_plot(self.experiment_root_path)
+            plotter.save_plot(self.experiment_root_path)
 
     def load_data(self):
         paths = self.get_paths()
@@ -61,9 +63,12 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
     def load_y_data(self, paths):
         raise NotImplementedError("Trying to call load_y_data from abstract base class SingleReplicateHandler.")
 
-    def generate_plot(self):
-        self.plotter = plotters.SparsityAccuracyReplicatePlotter()
-        self.plotter.make_plot(self.x_data, self.y_data)
+    @abc.abstractmethod
+    def get_plotter(self):
+        raise NotImplementedError("Trying to call get_plotter from abstract base class SingleReplicateHandler.")
+
+    def generate_plot(self, plotter):
+        plotter.make_plot(self.x_data, self.y_data)
 
 
 class SparsityAccuracyOnSingleReplicateHandler(SingleReplicateHandler):
@@ -78,6 +83,20 @@ class SparsityAccuracyOnSingleReplicateHandler(SingleReplicateHandler):
         for logger_path in paths["accuracy"]:
             accuracies.append(utils.load_accuracy(logger_path))
         self.y_data = accuracies
+
+    def get_plotter(self):
+        return plotters.SparsityAccuracyReplicatePlotter()
+
+
+class SparsityNeuralPersistenceOnSingleReplicateHandler(SingleReplicateHandler):
+    def load_x_data(self, paths):
+        pass
+
+    def load_y_data(self, paths):
+        pass
+
+    def get_plotter(self):
+        pass
 
 
 def sparsity_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
