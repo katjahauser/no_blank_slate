@@ -1,3 +1,4 @@
+import abc
 import os.path
 from pathlib import Path
 
@@ -13,13 +14,20 @@ import src.utils as utils
 # todo add replicates to replicate plotting function save paths
 
 
-class SparsityAccuracyOnSingleReplicateHandler:
+class SingleReplicateHandler(metaclass=abc.ABCMeta):
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        return (hasattr(subclass, 'load_x_data') and
+                callable(subclass.load_x_data) and
+                hasattr(subclass, 'load_y_data') and
+                callable(subclass.load_y_data))
+
     def __init__(self, experiment_root_path, eps):
         self.experiment_root_path = experiment_root_path
         self.raise_if_no_valid_epoch(eps)
         self.epochs = eps
-        self.sparsities = []
-        self.accuracies = []
+        self.x_data = []
+        self.y_data = []
         self.plotter = None
 
     @staticmethod
@@ -30,36 +38,46 @@ class SparsityAccuracyOnSingleReplicateHandler:
             raise ValueError("Epochs must be an integer. You provided {}.".format(str(epochs)))
 
     def evaluate_experiment(self, show_plot, save_plot):
-        self.prepare_data_for_plotting()
+        self.load_data()
         self.generate_plot()
         if show_plot:
             self.plotter.show_plot()
         if save_plot:
             self.plotter.save_plot(self.experiment_root_path)
 
-    def prepare_data_for_plotting(self):
+    def load_data(self):
         paths = self.get_paths()
-        self.load_sparsities(paths)
-        self.load_accuracies(paths)
+        self.load_x_data(paths)
+        self.load_y_data(paths)
 
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
-    def load_sparsities(self, paths):
-        sparsities = []
-        for report_path in paths["sparsity"]:
-            sparsities.append(utils.load_sparsity(report_path))
-        self.sparsities = sparsities
+    @abc.abstractmethod
+    def load_x_data(self, paths):
+        raise NotImplementedError("Trying to call load_x_data from abstract base class SingleReplicateHandler.")
 
-    def load_accuracies(self, paths):
-        accuracies = []
-        for logger_path in paths["accuracy"]:
-            accuracies.append(utils.load_accuracy(logger_path))
-        self.accuracies = accuracies
+    @abc.abstractmethod
+    def load_y_data(self, paths):
+        raise NotImplementedError("Trying to call load_y_data from abstract base class SingleReplicateHandler.")
 
     def generate_plot(self):
         self.plotter = plotters.SparsityAccuracyReplicatePlotter()
-        self.plotter.make_plot(self.sparsities, self.accuracies)
+        self.plotter.make_plot(self.x_data, self.y_data)
+
+
+class SparsityAccuracyOnSingleReplicateHandler(SingleReplicateHandler):
+    def load_x_data(self, paths):
+        sparsities = []
+        for report_path in paths["sparsity"]:
+            sparsities.append(utils.load_sparsity(report_path))
+        self.x_data = sparsities
+
+    def load_y_data(self, paths):
+        accuracies = []
+        for logger_path in paths["accuracy"]:
+            accuracies.append(utils.load_accuracy(logger_path))
+        self.y_data = accuracies
 
 
 def sparsity_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
