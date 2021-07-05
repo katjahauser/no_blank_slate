@@ -113,14 +113,40 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
         self.assertEqual("Sparsity-Accuracy", plotter.title)
         self.assertEqual("Sparsity", plotter.x_label)
         self.assertEqual("Accuracy", plotter.y_label)
-        self.assertEqual(None, plotter.axis)
-        self.assertEqual(None, plotter.figure)
         self.assertEqual("sparsity_accuracy_replicate_plot.png", plotter.save_file_name)
 
     def test_inversion_of_x_axis(self):
         # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
         # function that does the plotting, but not the plot itself
         plotter = plotters.SparsityAccuracyReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = np.ones(3)
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.xaxis_inverted())
+
+
+class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
+    def test_is_base_plotter_subclass(self):
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityNeuralPersistenceReplicatePlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly(self):
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+
+        self.assertEqual("Sparsity-Neural Persistence", plotter.title)
+        self.assertEqual("Sparsity", plotter.x_label)
+        self.assertEqual("Neural Persistence", plotter.y_label)
+        self.assertEqual("sparsity_neural_persistence_replicate_plot.png", plotter.save_file_name)
+
+    def test_inversion_of_x_axis(self):
+        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
+        # function that does the plotting, but not the plot itself
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
         x_data = np.arange(3)
         y_data = np.ones(3)
         plotter.axis = plotter.setup_figure_and_axis()
