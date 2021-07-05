@@ -75,7 +75,20 @@ class TestGetPathsFromReplicate(unittest.TestCase):
 
     def test_lottery(self):
         lottery_path = "resources/test_get_paths_from_replicate/lottery_1db02943c54add91e13635735031a85e/replicate_1/"
-        expected_result = generate_expected_paths_for_lottery_single_replicate_with_2_eps(lottery_path)
+        paths = [lottery_path + "level_{}/main/" + "logger",
+                 lottery_path + "level_{}/main/" + "sparsity_report.json",
+                 lottery_path + "level_{}/main/" + "model_ep0_it0.pth",
+                 lottery_path + "level_{}/main/" + "model_ep2_it0.pth",
+                 lottery_path + "level_{}/main/" + "mask.pth"]
+        expected_result = {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}
+        for i in range(4):
+            expected_result["accuracy"].append(paths[0].format(str(i)))
+            expected_result["sparsity"].append(paths[1].format(str(i)))
+            expected_result["model_start"].append(paths[2].format(str(i)))
+            if i == 0:
+                expected_result["model_end"].append((paths[3].format(str(i)), None))
+            else:
+                expected_result["model_end"].append((paths[3].format(str(i)), paths[4].format(str(i))))
 
         actual_result = utils.get_paths_from_replicate(lottery_path, "lottery", 2)
 
@@ -127,23 +140,6 @@ class TestGetPathsFromReplicate(unittest.TestCase):
         with(self.assertRaises(FileNotFoundError)):
             utils.get_paths_from_replicate(valid_train_path, valid_ex_type, 4)
 
-
-def generate_expected_paths_for_lottery_single_replicate_with_2_eps(experiment_root_path):
-    paths = [experiment_root_path + "level_{}/main/" + "logger",
-             experiment_root_path + "level_{}/main/" + "sparsity_report.json",
-             experiment_root_path + "level_{}/main/" + "model_ep0_it0.pth",
-             experiment_root_path + "level_{}/main/" + "model_ep2_it0.pth",
-             experiment_root_path + "level_{}/main/" + "mask.pth"]
-    expected_result = {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}
-    for i in range(4):
-        expected_result["accuracy"].append(paths[0].format(str(i)))
-        expected_result["sparsity"].append(paths[1].format(str(i)))
-        expected_result["model_start"].append(paths[2].format(str(i)))
-        if i == 0:
-            expected_result["model_end"].append((paths[3].format(str(i)), None))
-        else:
-            expected_result["model_end"].append((paths[3].format(str(i)), paths[4].format(str(i))))
-    return expected_result
 
 
 class TestGetPathsFromExperiment(unittest.TestCase):
