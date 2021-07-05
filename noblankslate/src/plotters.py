@@ -11,8 +11,8 @@ class PlotterBaseClass(metaclass=abc.ABCMeta):
     title = abc.abstractproperty()
     x_label = abc.abstractproperty()
     y_label = abc.abstractproperty()
-    axis = abc.abstractproperty()
-    figure = abc.abstractproperty()
+    axis = None
+    figure = None
     save_file_name = abc.abstractproperty()
 
     # title and labels as abstract arguments (oder so)
@@ -24,8 +24,6 @@ class PlotterBaseClass(metaclass=abc.ABCMeta):
                 hasattr(subclass, 'title') and
                 hasattr(subclass, 'x_label') and
                 hasattr(subclass, 'y_label') and
-                hasattr(subclass, 'axis') and
-                hasattr(subclass, 'figure') and
                 hasattr(subclass, 'save_file_name'))
 
     def make_plot(self, x_data, y_data):
@@ -100,8 +98,6 @@ class SparsityAccuracyReplicatePlotter(PlotterBaseClass):
     title = "Sparsity-Accuracy"
     x_label = "Sparsity"
     y_label = "Accuracy"
-    axis = None
-    figure = None
     save_file_name = "sparsity_accuracy_replicate_plot.png"
 
     def plot_data(self, axis, sparsities, accuracies):
