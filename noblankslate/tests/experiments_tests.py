@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import os.path
 import unittest
+from unittest.mock import patch
 
 import matplotlib.axes
 import matplotlib.figure
@@ -18,45 +19,46 @@ show_plot_off_for_fast_tests = False
 show_no_plots_for_automated_tests = True
 
 
-class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
-    def test_is_subclass_of_SingleReplicateHandler(self):
-        sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path",                                                                                      1)
-
-        self.assertTrue(issubclass(experiment.SparsityAccuracyOnSingleReplicateHandler, experiment.SingleReplicateHandler))
-        self.assertTrue(isinstance(sparsity_accuracy_single_replicate_handler, experiment.SingleReplicateHandler))
-
+class TestSingleReplicateHandler(unittest.TestCase):
+    # This class tests the methods in SingleReplicateHandler that are are independent of the implementation of its
+    # derivatives. While evaluate_experiment, for example, is not abstract, strictly speaking, its results strongly
+    # depend on the implementation of tha derivatives, which is why I rather test it here for now.
+    # todo change this in a later refactoring to a clean mock-up situation
+    @patch.object(experiment.SingleReplicateHandler, '__abstractmethods__', set())
     def test_initialization(self):
         expected_path = "./dummy_test_path/"
         expected_epochs = 42
         expected_sparsities = []
         expected_accuracies = []
 
-        handler = experiment.SparsityAccuracyOnSingleReplicateHandler(expected_path, expected_epochs)
+        handler = experiment.SingleReplicateHandler(expected_path, expected_epochs)
 
         self.assertEqual(expected_path, handler.experiment_root_path)
         self.assertEqual(expected_epochs, handler.epochs)
         self.assertEqual(expected_sparsities, handler.x_data)
         self.assertEqual(expected_accuracies, handler.y_data)
 
+    @patch.object(experiment.SingleReplicateHandler, '__abstractmethods__', set())
     def test_initialization_with_invalid_epochs_raises(self):
         epoch_equals_0 = 0
         epoch_smaller_0 = -10
         epoch_no_integer = 3.8
 
         with self.assertRaises(ValueError):
-            experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path", epoch_equals_0)
+            experiment.SingleReplicateHandler("dummy_path", epoch_equals_0)
         with self.assertRaises(ValueError):
-            experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path", epoch_smaller_0)
+            experiment.SingleReplicateHandler("dummy_path", epoch_smaller_0)
         with self.assertRaises(ValueError):
-            experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path", epoch_no_integer)
+            experiment.SingleReplicateHandler("dummy_path", epoch_no_integer)
 
+    @patch.object(experiment.SingleReplicateHandler, '__abstractmethods__', set())
     def test_raise_if_no_valid_epoch(self):
         valid_num_epochs = 1
         epoch_equals_0 = 0
         epoch_smaller_0 = -4
         epoch_no_integer = 4.5
 
-        handler = experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path", valid_num_epochs)
+        handler = experiment.SingleReplicateHandler("dummy_path", valid_num_epochs)
 
         with self.assertRaises(ValueError):
             handler.raise_if_no_valid_epoch(epoch_equals_0)
@@ -65,16 +67,24 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
         with self.assertRaises(ValueError):
             handler.raise_if_no_valid_epoch(epoch_no_integer)
 
+    @patch.object(experiment.SingleReplicateHandler, '__abstractmethods__', set())
     def test_get_paths(self):
         lottery_path = "resources/test_get_paths_from_replicate/lottery_1db02943c54add91e13635735031a85e/replicate_1/"
         expected_result = generate_expected_paths_for_lottery_single_replicate_with_2_eps(lottery_path)
         valid_num_epochs = 2
-        sparsity_accuracy_single_replicate_handler = \
-            experiment.SparsityAccuracyOnSingleReplicateHandler(lottery_path, valid_num_epochs)
+        handler = experiment.SingleReplicateHandler(lottery_path, valid_num_epochs)
 
-        actual_results = sparsity_accuracy_single_replicate_handler.get_paths()
+        actual_results = handler.get_paths()
 
         self.assertDictEqual(expected_result, actual_results)
+
+
+class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
+    def test_is_subclass_of_SingleReplicateHandler(self):
+        sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path",                                                                                      1)
+
+        self.assertTrue(issubclass(experiment.SparsityAccuracyOnSingleReplicateHandler, experiment.SingleReplicateHandler))
+        self.assertTrue(isinstance(sparsity_accuracy_single_replicate_handler, experiment.SingleReplicateHandler))
 
     def test_load_x_data(self):  # loads sparsities
         expected_sparsities = [1.0, 212959.0/266200.0]
@@ -84,7 +94,7 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
                                                                 valid_num_epochs)
         paths = sparsity_accuracy_single_replicate_handler.get_paths()
 
-        sparsity_accuracy_single_replicate_handler.load_x_data(paths)
+        sparsity_accuracy_single_replicate_handler.set_x_data(paths)
 
         self.assertEqual(expected_sparsities, sparsity_accuracy_single_replicate_handler.x_data)
 
@@ -96,11 +106,11 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
                                                                 valid_num_epochs)
         paths = sparsity_accuracy_single_replicate_handler.get_paths()
 
-        sparsity_accuracy_single_replicate_handler.load_y_data(paths)
+        sparsity_accuracy_single_replicate_handler.set_y_data(paths)
 
         self.assertEqual(expected_accuracies, sparsity_accuracy_single_replicate_handler.y_data)
 
-    def test_prepare_data_for_plotting(self):
+    def test_load_data(self):
         expected_sparsities = [1.0, 212959.0/266200.0]
         expected_accuracies = [0.9644, 0.9678]
         valid_num_epochs = 2
@@ -121,7 +131,7 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
             experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
                                                                 valid_num_epochs)
 
-        plotter = sparsity_accuracy_single_replicate_handler.get_plotter()
+        plotter = sparsity_accuracy_single_replicate_handler.set_plotter()
 
         self.assertTrue(isinstance(plotter, plotters.SparsityAccuracyReplicatePlotter))
 
@@ -130,7 +140,7 @@ class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
         sparsity_accuracy_single_replicate_handler = \
             experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
                                                                 valid_num_epochs)
-        plotter = sparsity_accuracy_single_replicate_handler.get_plotter()
+        plotter = sparsity_accuracy_single_replicate_handler.set_plotter()
 
         sparsity_accuracy_single_replicate_handler.generate_plot(plotter)
 
@@ -215,30 +225,6 @@ class TestSparsityNeuralPersistenceOnSingleReplicateHandler(unittest.TestCase):
                                    experiment.SingleReplicateHandler))
         self.assertTrue(isinstance(sparsity_neural_persistence_single_replicate_handler,
                                    experiment.SingleReplicateHandler))
-
-    
-
-
-
-class TestSparsityAccuracyReplicate(unittest.TestCase):
-    def test_sparsity_acc(self):
-        expected_accuracies = [0.9644, 0.9678]
-        expected_sparsities = [1.0, 212959.0/266200.0]
-
-        sparsities, accuracies = experiment.sparsity_accuracy_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
-                                                                             show_plot=show_plot_off_for_fast_tests, save_plot=False)
-        self.assertEqual(expected_sparsities, sparsities)
-        self.assertEqual(expected_accuracies, accuracies)
-
-    def test_save_plot(self):
-        if os.path.isfile("./resources/test_plots/lottery_simplified/plots/sparsity_accuracy.png"):
-            os.remove("./resources/test_plots/lottery_simplified/plots/sparsity_accuracy.png")
-
-        assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/sparsity_accuracy.png")
-
-        _, _ = experiment.sparsity_accuracy_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
-                                                           show_plot=show_plot_off_for_fast_tests, save_plot=True)
-        self.assertTrue(os.path.isfile("./resources/test_plots/lottery_simplified/plots/sparsity_accuracy.png"))
 
 
 class TestSparsityNeuralPersistenceReplicate(unittest.TestCase):

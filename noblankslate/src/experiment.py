@@ -17,12 +17,12 @@ import src.utils as utils
 class SingleReplicateHandler(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'load_x_data') and
-                callable(subclass.load_x_data) and
-                hasattr(subclass, 'load_y_data') and
-                callable(subclass.load_y_data) and
-                hasattr(subclass, 'get_plotter') and
-                callable(subclass.get_plotter))
+        return (hasattr(subclass, 'set_x_data') and
+                callable(subclass.set_x_data) and
+                hasattr(subclass, 'set_y_data') and
+                callable(subclass.set_y_data) and
+                hasattr(subclass, 'set_plotter') and
+                callable(subclass.set_plotter))
 
     def __init__(self, experiment_root_path, eps):
         self.experiment_root_path = experiment_root_path
@@ -40,7 +40,7 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
 
     def evaluate_experiment(self, show_plot, save_plot):
         self.load_data()
-        plotter = self.get_plotter()
+        plotter = self.set_plotter()
         self.generate_plot(plotter)
         if show_plot:
             plotter.show_plot()
@@ -49,22 +49,22 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
 
     def load_data(self):
         paths = self.get_paths()
-        self.load_x_data(paths)
-        self.load_y_data(paths)
+        self.set_x_data(paths)
+        self.set_y_data(paths)
 
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
     @abc.abstractmethod
-    def load_x_data(self, paths):
+    def set_x_data(self, paths):
         raise NotImplementedError("Trying to call load_x_data from abstract base class SingleReplicateHandler.")
 
     @abc.abstractmethod
-    def load_y_data(self, paths):
+    def set_y_data(self, paths):
         raise NotImplementedError("Trying to call load_y_data from abstract base class SingleReplicateHandler.")
 
     @abc.abstractmethod
-    def get_plotter(self):
+    def set_plotter(self):
         raise NotImplementedError("Trying to call get_plotter from abstract base class SingleReplicateHandler.")
 
     def generate_plot(self, plotter):
@@ -72,30 +72,30 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
 
 
 class SparsityAccuracyOnSingleReplicateHandler(SingleReplicateHandler):
-    def load_x_data(self, paths):
+    def set_x_data(self, paths):
         sparsities = []
         for report_path in paths["sparsity"]:
             sparsities.append(utils.load_sparsity(report_path))
         self.x_data = sparsities
 
-    def load_y_data(self, paths):
+    def set_y_data(self, paths):
         accuracies = []
         for logger_path in paths["accuracy"]:
             accuracies.append(utils.load_accuracy(logger_path))
         self.y_data = accuracies
 
-    def get_plotter(self):
+    def set_plotter(self):
         return plotters.SparsityAccuracyReplicatePlotter()
 
 
 class SparsityNeuralPersistenceOnSingleReplicateHandler(SingleReplicateHandler):
-    def load_x_data(self, paths):
+    def set_x_data(self, paths):
         pass
 
-    def load_y_data(self, paths):
+    def set_y_data(self, paths):
         pass
 
-    def get_plotter(self):
+    def set_plotter(self):
         pass
 
 
