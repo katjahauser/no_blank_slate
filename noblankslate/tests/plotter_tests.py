@@ -12,6 +12,94 @@ import src.plotters as plotters
 show_no_plots_for_automated_tests = True
 
 
+class ConcretePlotter(plotters.PlotterBaseClass):
+    # This is a mock class used to test the non-abstract methods in plotters.PlotterBaseClass
+    title = "ConcretePlotter Title"
+    x_label = "ConcretePlotter x-label"
+    y_label = "ConcretePlotter y-label"
+    save_file_name = "ConcretePlotter_plot.png"
+
+    def plot_data(self, axis, x_values, y_values):
+        pass
+
+
+class TestPlotterBaseClass(unittest.TestCase):
+    def test_is_base_plotter_subclass(self):
+        plotter = ConcretePlotter()
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityAccuracyReplicatePlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly(self):
+        plotter = ConcretePlotter()
+
+        self.assertEqual("ConcretePlotter Title", plotter.title)
+        self.assertEqual("ConcretePlotter x-label", plotter.x_label)
+        self.assertEqual("ConcretePlotter y-label", plotter.y_label)
+        self.assertEqual(None, plotter.axis)
+        self.assertEqual(None, plotter.figure)
+        self.assertEqual("ConcretePlotter_plot.png", plotter.save_file_name)
+
+    def test_setup_figure_and_axis(self):
+        plotter = ConcretePlotter()
+
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        self.assertTrue(issubclass(type(plotter.axis), matplotlib.axes.SubplotBase))
+        self.assertTrue(issubclass(type(plotter.figure), matplotlib.figure.Figure))
+
+    def test_set_title_and_axis_labels(self):
+        plotter = ConcretePlotter()
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.set_title_and_axis_labels(plotter.axis)
+        self.assertEqual("ConcretePlotter Title", plotter.axis.get_title())
+        self.assertEqual("ConcretePlotter x-label", plotter.axis.get_xlabel())
+        self.assertEqual("ConcretePlotter y-label", plotter.axis.get_ylabel())
+
+    def test_save_plot(self):
+        test_path = "resources/test_plots/plots/ConcretePlotter_plot.png"
+        if os.path.exists(test_path):
+            os.remove(test_path)
+        assert not os.path.exists(test_path)
+        plotter = ConcretePlotter()
+        x_data = np.arange(3)
+        y_data = np.ones(3)
+        plotter.make_plot(x_data, y_data)
+
+        plotter.save_plot("resources/test_plots/empty_dummy_root")
+
+        self.assertTrue(os.path.exists(test_path))
+
+    def test_show_plot_shows_when_axis_not_none(self):
+        if not show_no_plots_for_automated_tests:
+            plotter = ConcretePlotter()
+            x_data = np.arange(3)
+            y_data = np.ones(3)
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
+        else:
+            print("Ignoring TestSparsityAccuracyReplicatePlotter.test_show_plot_shows_when_axis_not_none to allow "
+                  "automated testing.")
+
+    def test_show_plot_raises_when_axis_none(self):
+        plotter = ConcretePlotter()
+
+        with self.assertRaises(TypeError):
+            plotter.show_plot()
+
+    def test_deletion(self):
+        plotter = ConcretePlotter()
+        plotter.setup_figure_and_axis()
+        # only one figure exists -- this is relevant, if the test suit runs several tests in parallel
+        assert(len(plt.get_fignums()) == 1)
+
+        plotter.__del__()
+
+        self.assertFalse(plt.get_fignums())  # an empty list is cast to False by convention
+
+
 class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
     def test_is_base_plotter_subclass(self):
         plotter = plotters.SparsityAccuracyReplicatePlotter()
@@ -29,14 +117,6 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
         self.assertEqual(None, plotter.figure)
         self.assertEqual("sparsity_accuracy_replicate_plot.png", plotter.save_file_name)
 
-    def test_setup_figure_and_axis(self):
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-
-        plotter.axis = plotter.setup_figure_and_axis()
-
-        self.assertTrue(issubclass(type(plotter.axis), matplotlib.axes.SubplotBase))
-        self.assertTrue(issubclass(type(plotter.figure), matplotlib.figure.Figure))
-
     def test_inversion_of_x_axis(self):
         # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
         # function that does the plotting, but not the plot itself
@@ -48,57 +128,6 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
         plotter.plot_data(plotter.axis, x_data, y_data)
 
         self.assertTrue(plotter.axis.xaxis_inverted())
-
-    def test_set_title_and_axis_labels(self):
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-        plotter.axis = plotter.setup_figure_and_axis()
-
-        plotter.set_title_and_axis_labels(plotter.axis)
-        self.assertEqual("Sparsity-Accuracy", plotter.axis.get_title())
-        self.assertEqual("Sparsity", plotter.axis.get_xlabel())
-        self.assertEqual("Accuracy", plotter.axis.get_ylabel())
-
-    def test_save_plot(self):
-        test_path = "resources/test_plots/plots/sparsity_accuracy_replicate_plot.png"
-        if os.path.exists(test_path):
-            os.remove(test_path)
-        assert not os.path.exists(test_path)
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-        x_data = np.arange(3)
-        y_data = np.ones(3)
-        plotter.make_plot(x_data, y_data)
-
-        plotter.save_plot("resources/test_plots/empty_dummy_root")
-
-        self.assertTrue(os.path.exists(test_path))
-
-    def test_show_plot_shows_when_axis_not_none(self):
-        if not show_no_plots_for_automated_tests:
-            plotter = plotters.SparsityAccuracyReplicatePlotter()
-            x_data = np.arange(3)
-            y_data = np.ones(3)
-            plotter.make_plot(x_data, y_data)
-
-            plotter.show_plot()
-        else:
-            print("Ignoring TestSparsityAccuracyReplicatePlotter.test_show_plot_shows_when_axis_not_none to allow "
-                  "automated testing.")
-
-    def test_show_plot_raises_when_axis_none(self):
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-
-        with self.assertRaises(TypeError):
-            plotter.show_plot()
-
-    def test_deletion(self):
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-        plotter.setup_figure_and_axis()
-        # only one figure exists -- this is relevant, if the test suit runs several tests in parallel
-        assert(len(plt.get_fignums()) == 1)
-
-        plotter.__del__()
-
-        self.assertFalse(plt.get_fignums())  # an empty list is cast to False by convention
 
 
 class TestReplicatePathHandler(unittest.TestCase):
