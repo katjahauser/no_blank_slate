@@ -17,10 +17,12 @@ import src.utils as utils
 class SingleReplicateHandler(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'set_x_data') and
-                callable(subclass.set_x_data) and
-                hasattr(subclass, 'set_y_data') and
-                callable(subclass.set_y_data) and
+        return (hasattr(subclass, 'load_x_data') and
+                callable(subclass.load_x_data) and
+                hasattr(subclass, 'load_y_data') and
+                callable(subclass.load_y_data) and
+                hasattr(subclass, 'prepare_data_for_plotting') and
+                callable(subclass.prepare_data_for_plotting) and
                 hasattr(subclass, 'set_plotter') and
                 callable(subclass.set_plotter))
 
@@ -40,6 +42,7 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
 
     def evaluate_experiment(self, show_plot, save_plot):
         self.load_data()
+        self.prepare_data_for_plotting()
         plotter = self.set_plotter()
         self.generate_plot(plotter)
         if show_plot:
@@ -49,107 +52,79 @@ class SingleReplicateHandler(metaclass=abc.ABCMeta):
 
     def load_data(self):
         paths = self.get_paths()
-        self.set_x_data(paths)
-        self.set_y_data(paths)
+        self.load_x_data(paths)
+        self.load_y_data(paths)
 
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
     @abc.abstractmethod
-    def set_x_data(self, paths):
+    def load_x_data(self, paths):
         raise NotImplementedError("Trying to call load_x_data from abstract base class SingleReplicateHandler.")
 
     @abc.abstractmethod
-    def set_y_data(self, paths):
+    def load_y_data(self, paths):
         raise NotImplementedError("Trying to call load_y_data from abstract base class SingleReplicateHandler.")
 
     @abc.abstractmethod
+    def prepare_data_for_plotting(self):
+        raise NotImplementedError("Trying to call prepare_data_for_plotting from abstract base class "
+                                  "SingleReplicateHandler.")
+
+    @abc.abstractmethod
     def set_plotter(self):
-        raise NotImplementedError("Trying to call get_plotter from abstract base class SingleReplicateHandler.")
+        raise NotImplementedError("Trying to call set_plotter from abstract base class SingleReplicateHandler.")
 
     def generate_plot(self, plotter):
         plotter.make_plot(self.x_data, self.y_data)
 
 
 class SparsityAccuracyOnSingleReplicateHandler(SingleReplicateHandler):
-    def set_x_data(self, paths):
+    def load_x_data(self, paths):
         sparsities = []
         for report_path in paths["sparsity"]:
             sparsities.append(utils.load_sparsity(report_path))
         self.x_data = sparsities
 
-    def set_y_data(self, paths):
+    def load_y_data(self, paths):
         accuracies = []
         for logger_path in paths["accuracy"]:
             accuracies.append(utils.load_accuracy(logger_path))
         self.y_data = accuracies
+
+    def prepare_data_for_plotting(self):
+        pass  # nothing to do for this type of plot
 
     def set_plotter(self):
         return plotters.SparsityAccuracyReplicatePlotter()
 
 
 class SparsityNeuralPersistenceOnSingleReplicateHandler(SingleReplicateHandler):
-    def set_x_data(self, paths):
-        pass
+    def load_x_data(self, paths):
+        sparsities = []
+        for report_path in paths["sparsity"]:
+            sparsities.append(utils.load_sparsity(report_path))
+        self.x_data = sparsities
 
-    def set_y_data(self, paths):
-        pass
+    def load_y_data(self, paths):
+        neural_persistences = []
+        neural_pers_calc = PerLayerCalculation()
+
+        # todo this is more than just loading and setting, unclear how to refactor at this point because I do not want to push around loaded models
+        for end_model_path, mask_path in paths["model_end"]:
+            if mask_path is None:
+                neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
+            else:
+                neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
+
+        self.y_data = neural_persistences
+
+    def prepare_data_for_plotting(self):
+        # nothing to do for self.x_data
+        self.y_data = utils.prepare_neural_persistence_for_plotting(self.y_data)
 
     def set_plotter(self):
-        pass
-
-
-def sparsity_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
-    """
-    Creates sparsity-neural persistence plots.
-
-    todo add option to plot layers in one and global in another plot? might be better arrangement for models with a large number of layers.
-
-    :param experiment_root_path: str, path to root directory of a "lottery" type experiment.
-    :param eps: int, number of training epochs.
-    :param show_plot: bool, default: True
-    :param save_plot: bool, default: False, plot will be saved to
-    experiment_root_path/plots/sparsity_neural_persistence.png
-    :return: tuple containing the list of sparsities and a list containing the output of tda.PerLayerCalculation() for
-    each pruned network.
-    """
-    paths = utils.get_paths_from_replicate(experiment_root_path, "lottery", eps)
-
-    sparsities = []
-    for report in paths["sparsity"]:
-        sparsities.append(utils.load_sparsity(report))
-
-    neural_persistences = []
-    neural_pers_calc = PerLayerCalculation()
-
-    for end_model_path, mask_path in paths["model_end"]:
-        if mask_path is None:
-            neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
-        else:
-            neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
-
-    neural_pers_for_plotting = utils.prepare_neural_persistence_for_plotting(neural_persistences)
-
-    _, p = plt.subplots(1, 1)
-
-    for key, np_plot in neural_pers_for_plotting.items():
-        p.plot(sparsities, np_plot, label=key)
-    p.invert_xaxis()
-    p.legend()
-    plt.title("Sparsity-Neural Persistence")
-    plt.xlabel("Sparsity")
-    plt.ylabel("Neural Persistence")
-
-    if save_plot:
-        plot_dir = str(Path(experiment_root_path).parent) + "/plots/"
-        if not os.path.isdir(plot_dir):
-            os.mkdir(plot_dir)
-        plt.savefig(plot_dir + "sparsity_neural_persistence.png")
-    # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
-    if show_plot:
-        plt.show()
-
-    return sparsities, neural_persistences
+        return plotters.SparsityNeuralPersistenceReplicatePlotter()
 
 
 def accuracy_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):

@@ -113,5 +113,7 @@ class SparsityNeuralPersistenceReplicatePlotter(PlotterBaseClass):
     save_file_name = "sparsity_neural_persistence_replicate_plot.png"
 
     def plot_data(self, axis, sparsities, neural_persistences):
-        axis.plot(sparsities, neural_persistences)
+        for key, np_plot in neural_persistences.items():
+            axis.plot(sparsities, np_plot, label=key)
         axis.invert_xaxis()
+        axis.legend()

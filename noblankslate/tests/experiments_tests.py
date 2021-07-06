@@ -1,3 +1,4 @@
+import pathlib
 from collections import OrderedDict
 import os.path
 import unittest
@@ -10,6 +11,7 @@ import torch
 from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.experiment as experiment
 import src.plotters as plotters
+import src.utils as utils
 from utils_tests import TestModel
 
 
@@ -18,13 +20,114 @@ show_plot_off_for_fast_tests = False
 show_no_plots_for_automated_tests = True
 
 
+class TestSingleReplicateHandler(unittest.TestCase):
+    def test_is_subclass_of_SingleReplicateHandler(self):
+        handler = ConcreteSingleReplicateHandler("dummy_path", 1)
+
+        self.assertTrue(issubclass(ConcreteSingleReplicateHandler, experiment.SingleReplicateHandler))
+        self.assertTrue(isinstance(handler, experiment.SingleReplicateHandler))
+
+    def test_load_data(self):
+        expected_x_values = [1., 2., 3.]
+        expected_y_values = [1., 2., 3.]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        handler = ConcreteSingleReplicateHandler(path_to_replicate, valid_num_epochs)
+        assert handler.x_data == [] and handler.y_data == []
+
+        handler.load_data()
+
+        self.assertEqual(expected_x_values, handler.x_data)
+        self.assertEqual(expected_y_values, handler.y_data)
+
+    def test_set_plotter(self):
+        valid_num_epochs = 2
+        handler = ConcreteSingleReplicateHandler("dummy_path", valid_num_epochs)
+
+        plotter = handler.set_plotter()
+
+        self.assertTrue(isinstance(plotter, MockPlotter))
+
+    def test_generate_plot(self):
+        valid_num_epochs = 2
+        handler = ConcreteSingleReplicateHandler("dummy_path", valid_num_epochs)
+        plotter = handler.set_plotter()
+
+        handler.generate_plot(plotter)
+
+        # the two tests below implicitly test that plotter.make_plot was called -- plotter.axis and plotter.figure are
+        # None otherwise
+        self.assertTrue(isinstance(plotter.axis, matplotlib.axes.SubplotBase))
+        self.assertTrue(isinstance(plotter.figure, matplotlib.figure.Figure))
+
+    def test_evaluate_experiment_show_and_save(self):
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+            assert os.path.exists(path_to_replicate)
+            handler = ConcreteSingleReplicateHandler(path_to_replicate, valid_num_epochs)
+            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
+            remove_target_file_if_exists(target_file)
+
+            handler.evaluate_experiment(show_plot=True, save_plot=True)
+
+            self.assertTrue(os.path.exists(target_file))
+        else:
+            print("Ignoring TestSparsityAccuracyOnSingleReplicateHandler.test_evaluate_experiment_show_and_save to "
+                  "allow automated testing.")
+
+    def test_evaluate_experiment_show_but_no_save(self):
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+            assert os.path.exists(path_to_replicate)
+            handler = ConcreteSingleReplicateHandler(path_to_replicate, valid_num_epochs)
+            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
+            remove_target_file_if_exists(target_file)
+
+            handler.evaluate_experiment(show_plot=True, save_plot=False)
+
+            self.assertFalse(os.path.exists(target_file))
+        else:
+            print("Ignoring TestSparsityAccuracyOnSingleReplicateHandler.test_evaluate_experiment_show_but_no_save to "
+                  "allow automated testing.")
+
+    def test_evaluate_experiment_no_show_but_save(self):
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert os.path.exists(path_to_replicate)
+        handler = ConcreteSingleReplicateHandler(path_to_replicate, valid_num_epochs)
+        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
+        remove_target_file_if_exists(target_file)
+
+        handler.evaluate_experiment(show_plot=False, save_plot=True)
+
+        self.assertTrue(os.path.exists(target_file))
+
+    def test_evaluate_experiment_no_show_no_save(self):
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert os.path.exists(path_to_replicate)
+        handler = ConcreteSingleReplicateHandler(path_to_replicate, valid_num_epochs)
+        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
+        remove_target_file_if_exists(target_file)
+
+        handler.evaluate_experiment(show_plot=False, save_plot=False)
+
+        self.assertFalse(os.path.exists(target_file))
+
+
 class ConcreteSingleReplicateHandler(experiment.SingleReplicateHandler):
     # mock implementation for testing non-abstract methods in SingleReplicateHandler.
-    def set_x_data(self, paths):
+    def load_x_data(self, paths):
         self.x_data = [1., 2., 3.]
 
-    def set_y_data(self, paths):
+    def load_y_data(self, paths):
         self.y_data = [1., 2., 3.]
+
+    def prepare_data_for_plotting(self):
+        pass
 
     def set_plotter(self):
         return MockPlotter()
@@ -40,150 +143,96 @@ class MockPlotter(plotters.PlotterBaseClass):
         axis.plot(x_values, y_values)
 
 
+def check_simplified_lottery_experiment_replicate_exists(path_to_replicate):
+    if path_to_replicate[-1] != "/":
+        path_to_replicate = path_to_replicate + "/"
+
+    return (os.path.exists(path_to_replicate + "level_0/main/model_ep0_it0.pth") and
+            os.path.exists(path_to_replicate + "level_0/main/model_ep2_it0.pth") and
+            os.path.exists(path_to_replicate + "level_1/main/model_ep0_it0.pth") and
+            os.path.exists(path_to_replicate + "level_1/main/model_ep2_it0.pth") and
+            os.path.exists(path_to_replicate + "level_0/main/mask.pth") and
+            os.path.exists(path_to_replicate + "level_1/main/mask.pth") and
+            os.path.exists(path_to_replicate + "level_0/main/logger") and
+            os.path.exists(path_to_replicate + "level_1/main/logger") and
+            os.path.exists(path_to_replicate + "level_0/main/sparsity_report.json") and
+            os.path.exists(path_to_replicate + "level_1/main/sparsity_report.json"))
+
+
 def remove_target_file_if_exists(target_file):
     if os.path.exists(target_file):
         os.remove(target_file)
     assert not os.path.exists(target_file)
 
 
-class TestSingleReplicateHandler(unittest.TestCase):
-    def test_is_subclass_of_SingleReplicateHandler(self):
-        handler = ConcreteSingleReplicateHandler("dummy_path", 1)
-
-        self.assertTrue(issubclass(ConcreteSingleReplicateHandler, experiment.SingleReplicateHandler))
-        self.assertTrue(isinstance(handler, experiment.SingleReplicateHandler))
-
-    def test_load_data(self):
-        expected_x_values = [1., 2., 3.]
-        expected_y_values = [1., 2., 3.]
-        valid_num_epochs = 2
-        handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                 valid_num_epochs)
-        assert handler.x_data == [] and handler.y_data == []
-
-        handler.load_data()
-
-        self.assertEqual(expected_x_values, handler.x_data)
-        self.assertEqual(expected_y_values, handler.y_data)
-
-    def test_set_plotter(self):
-        valid_num_epochs = 2
-        handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                 valid_num_epochs)
-
-        plotter = handler.set_plotter()
-
-        self.assertTrue(isinstance(plotter, MockPlotter))
-
-    def test_generate_plot(self):
-        valid_num_epochs = 2
-        handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                 valid_num_epochs)
-        plotter = handler.set_plotter()
-
-        handler.generate_plot(plotter)
-
-        # the two tests below implicitly test that plotter.make_plot was called -- plotter.axis and plotter.figure are
-        # None otherwise
-        self.assertTrue(isinstance(plotter.axis, matplotlib.axes.SubplotBase))
-        self.assertTrue(isinstance(plotter.figure, matplotlib.figure.Figure))
-
-    def test_evaluate_experiment_show_and_save(self):
-        if not show_no_plots_for_automated_tests:
-            valid_num_epochs = 2
-            handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                     valid_num_epochs)
-            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
-            remove_target_file_if_exists(target_file)
-
-            handler.evaluate_experiment(show_plot=True, save_plot=True)
-
-            self.assertTrue(os.path.exists(target_file))
-        else:
-            print("Ignoring TestSparsityAccuracyOnSingleReplicateHandler.test_evaluate_experiment_show_and_save to "
-                  "allow automated testing.")
-
-    def test_evaluate_experiment_show_but_no_save(self):
-        if not show_no_plots_for_automated_tests:
-            valid_num_epochs = 2
-            handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                     valid_num_epochs)
-            target_file = \
-                "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
-            remove_target_file_if_exists(target_file)
-
-            handler.evaluate_experiment(show_plot=True, save_plot=False)
-
-            self.assertFalse(os.path.exists(target_file))
-        else:
-            print("Ignoring TestSparsityAccuracyOnSingleReplicateHandler.test_evaluate_experiment_show_but_no_save to "
-                  "allow automated testing.")
-
-    def test_evaluate_experiment_no_show_but_save(self):
-        valid_num_epochs = 2
-        handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                 valid_num_epochs)
-        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
-        remove_target_file_if_exists(target_file)
-
-        handler.evaluate_experiment(show_plot=False, save_plot=True)
-
-        self.assertTrue(os.path.exists(target_file))
-
-    def test_evaluate_experiment_no_show_no_save(self):
-        valid_num_epochs = 2
-        handler = ConcreteSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                 valid_num_epochs)
-        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteSingleReplicateHandler_plot.png"
-        remove_target_file_if_exists(target_file)
-
-        handler.evaluate_experiment(show_plot=False, save_plot=False)
-
-        self.assertFalse(os.path.exists(target_file))
-
-
 class TestSparsityAccuracyOnSingleReplicateHandler(unittest.TestCase):
     def test_is_subclass_of_SingleReplicateHandler(self):
         sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler("dummy_path",
                                                                                                          1)
-
         self.assertTrue(issubclass(experiment.SparsityAccuracyOnSingleReplicateHandler,
                                    experiment.SingleReplicateHandler))
         self.assertTrue(isinstance(sparsity_accuracy_single_replicate_handler, experiment.SingleReplicateHandler))
 
-    def test_set_x_data(self):  # loads sparsities
+    def test_load_x_data(self):  # loads sparsities
         expected_sparsities = [1.0, 212959.0/266200.0]
         valid_num_epochs = 2
-        sparsity_accuracy_single_replicate_handler = \
-            experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                valid_num_epochs)
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
         paths = sparsity_accuracy_single_replicate_handler.get_paths()
 
-        sparsity_accuracy_single_replicate_handler.set_x_data(paths)
+        sparsity_accuracy_single_replicate_handler.load_x_data(paths)
 
         self.assertEqual(expected_sparsities, sparsity_accuracy_single_replicate_handler.x_data)
 
-    def test_set_y_data(self):  # loads accuracies
+    def test_load_y_data(self):  # loads accuracies
         expected_accuracies = [0.9644, 0.9678]
         valid_num_epochs = 2
-        sparsity_accuracy_single_replicate_handler = \
-            experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                valid_num_epochs)
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
         paths = sparsity_accuracy_single_replicate_handler.get_paths()
 
-        sparsity_accuracy_single_replicate_handler.set_y_data(paths)
+        sparsity_accuracy_single_replicate_handler.load_y_data(paths)
 
         self.assertEqual(expected_accuracies, sparsity_accuracy_single_replicate_handler.y_data)
 
+    def test_prepare_data_for_plotting(self):
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        sparsity_accuracy_single_replicate_handler = \
+            experiment.SparsityAccuracyOnSingleReplicateHandler(path_to_replicate, valid_num_epochs)
+        sparsity_accuracy_single_replicate_handler.load_data()
+        expected_sparsity = sparsity_accuracy_single_replicate_handler.x_data
+        expected_accuracy = sparsity_accuracy_single_replicate_handler.y_data
+
+        sparsity_accuracy_single_replicate_handler.prepare_data_for_plotting()
+
+        self.assertEqual(expected_sparsity, sparsity_accuracy_single_replicate_handler.x_data)
+        self.assertEqual(expected_accuracy, sparsity_accuracy_single_replicate_handler.y_data)
+
     def test_set_plotter(self):
         valid_num_epochs = 2
-        sparsity_accuracy_single_replicate_handler = \
-            experiment.SparsityAccuracyOnSingleReplicateHandler("./resources/test_plots/lottery_simplified/replicate_1",
-                                                                valid_num_epochs)
+        sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+            "dummy_path", valid_num_epochs)
 
         plotter = sparsity_accuracy_single_replicate_handler.set_plotter()
 
         self.assertTrue(isinstance(plotter, plotters.SparsityAccuracyReplicatePlotter))
+
+    def test_evaluate_experiment(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+            assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+            sparsity_accuracy_single_replicate_handler = experiment.SparsityAccuracyOnSingleReplicateHandler(
+                path_to_replicate, valid_num_epochs)
+
+            sparsity_accuracy_single_replicate_handler.evaluate_experiment(True, False)
 
 
 class TestSparsityNeuralPersistenceOnSingleReplicateHandler(unittest.TestCase):
@@ -197,94 +246,83 @@ class TestSparsityNeuralPersistenceOnSingleReplicateHandler(unittest.TestCase):
         self.assertTrue(isinstance(sparsity_neural_persistence_single_replicate_handler,
                                    experiment.SingleReplicateHandler))
 
-
-class TestSparsityNeuralPersistenceReplicate(unittest.TestCase):
-    def test_sparsity_np(self):
-        setup_simplified_lottery_experiment()
-
-        expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
-                                                                                  [-1., -1., -1., -1.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[-1., -1.], [-1., -1.]]).numpy())])
-        expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
-                                                                                  [0., -1., -1., 0.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
-        per_layer_calc = PerLayerCalculation()
-
+    def test_load_x_data(self):  # loads sparsities
         expected_sparsities = [1.0, 212959.0/266200.0]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        sparsity_np_single_replicate_handler = experiment.SparsityNeuralPersistenceOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
+        paths = sparsity_np_single_replicate_handler.get_paths()
 
-        sparsities, neural_pers = experiment.sparsity_neural_persistence_plot_replicate(
-            "./resources/test_plots/lottery_simplified/replicate_1", 2, show_plot=show_plot_off_for_fast_tests, save_plot=False)
+        sparsity_np_single_replicate_handler.load_x_data(paths)
 
-        self.assertEqual(expected_sparsities, sparsities)
-        self.assertDictEqual(per_layer_calc(expected_dict_level_0), neural_pers[0])
-        self.assertDictEqual(per_layer_calc(expected_dict_level_1), neural_pers[1])
+        self.assertEqual(expected_sparsities, sparsity_np_single_replicate_handler.x_data)
 
-    def test_save_plot(self):
-        if os.path.isfile("./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png"):
-            os.remove("./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png")
+    def test_load_y_data(self):  # loads neural persistences
+        expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        sparsity_np_single_replicate_handler = experiment.SparsityNeuralPersistenceOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
+        paths = sparsity_np_single_replicate_handler.get_paths()
 
-        assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png")
+        sparsity_np_single_replicate_handler.load_y_data(paths)
 
-        _, _ = experiment.sparsity_neural_persistence_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
-                                                                     show_plot=show_plot_off_for_fast_tests, save_plot=True)
-        self.assertTrue(os.path.isfile(
-            "./resources/test_plots/lottery_simplified/plots/sparsity_neural_persistence.png"))
+        self.assertDictEqual(expected_np_level_0, sparsity_np_single_replicate_handler.y_data[0])
+        self.assertDictEqual(expected_np_level_1, sparsity_np_single_replicate_handler.y_data[1])
+
+    def test_prepare_data_for_plotting(self):
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        sparsity_np_single_replicate_handler = experiment.SparsityNeuralPersistenceOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
+        sparsity_np_single_replicate_handler.load_data()
+        expected_sparsity = sparsity_np_single_replicate_handler.x_data
+        expected_neural_persistence = utils.prepare_neural_persistence_for_plotting(
+            sparsity_np_single_replicate_handler.y_data)
+
+        sparsity_np_single_replicate_handler.prepare_data_for_plotting()
+
+        self.assertEqual(expected_sparsity, sparsity_np_single_replicate_handler.x_data)
+        self.assertEqual(expected_neural_persistence, sparsity_np_single_replicate_handler.y_data)
+
+    def test_set_plotter(self):
+        valid_num_epochs = 2
+        sparsity_np_single_replicate_handler = experiment.SparsityNeuralPersistenceOnSingleReplicateHandler(
+                "dummy_path", valid_num_epochs)
+
+        plotter = sparsity_np_single_replicate_handler.set_plotter()
+
+        self.assertTrue(isinstance(plotter, plotters.SparsityNeuralPersistenceReplicatePlotter))
+
+    def test_evaluate_experiment(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+            assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+            sparsity_np_single_replicate_handler = experiment.SparsityNeuralPersistenceOnSingleReplicateHandler(
+                    path_to_replicate, valid_num_epochs)
+
+            sparsity_np_single_replicate_handler.evaluate_experiment(True, False)
 
 
-def setup_simplified_lottery_experiment():
-    model = TestModel([2], outputs=2)
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep0_it0.pth")
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/model_ep2_it0.pth")
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep0_it0.pth")
-    torch.save(OrderedDict(model.named_parameters()),
-               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/model_ep2_it0.pth")
-
-    mask_level_0 = {'fc_layers.0.weight': torch.tensor([[1., 1., 1., 1.], [1., 1., 1., 1.]]),
-                    'fc.weight': torch.tensor([[1., 1.], [1., 1.]])}
-    mask_level_1 = {'fc_layers.0.weight': torch.tensor([[1., 0., 1., 0.], [0., 1., 1., 0.]]),
-                    'fc.weight': torch.tensor([[0., 0.], [1., 1.]])}
-    torch.save({k: v.int() for k, v in mask_level_0.items()},
-               "./resources/test_plots/lottery_simplified/replicate_1/level_0/main/mask.pth")
-    torch.save({k: v.int() for k, v in mask_level_1.items()},
-               "./resources/test_plots/lottery_simplified/replicate_1/level_1/main/mask.pth")
-
-
-class TestAccuracyNeuralPersistenceReplicate(unittest.TestCase):
-    def test_acc_np(self):
-        correct_eps = 2
-        expected_accuracies = [0.9644, 0.9678]
-
-        setup_simplified_lottery_experiment()
-
-        expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
-                                                                                  [-1., -1., -1., -1.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[-1., -1.], [-1., -1.]]).numpy())])
-        expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
-                                                                                  [0., -1., -1., 0.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
-        per_layer_calc = PerLayerCalculation()
-
-        accuracies, neural_pers = experiment.accuracy_neural_persistence_plot_replicate(
-            "./resources/test_plots/lottery_simplified/replicate_1", correct_eps, show_plot=show_plot_off_for_fast_tests, save_plot=False)
-
-        self.assertEqual(expected_accuracies, accuracies)
-
-        self.assertDictEqual(per_layer_calc(expected_dict_level_0), neural_pers[0])
-        self.assertDictEqual(per_layer_calc(expected_dict_level_1), neural_pers[1])
-
-    def test_save_plot(self):
-        if os.path.isfile("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png"):
-            os.remove("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png")
-
-        assert not os.path.exists("./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png")
-
-        _, _ = experiment.accuracy_neural_persistence_plot_replicate("./resources/test_plots/lottery_simplified/replicate_1", 2,
-                                                                     show_plot=show_plot_off_for_fast_tests, save_plot=True)
-        self.assertTrue(os.path.isfile(
-            "./resources/test_plots/lottery_simplified/plots/accuracy_neural_persistence.png"))
+def get_neural_persistences_for_lottery_simplified():
+    expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
+                                                                              [-1., -1., -1., -1.]]).numpy()),
+                                         ('fc.weight', torch.tensor([[-1., -1.],
+                                                                     [-1., -1.]]).numpy())])
+    expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
+                                                                              [0., -1., -1., 0.]]).numpy()),
+                                         ('fc.weight', torch.tensor([[0., 0.],
+                                                                     [-1., -1.]]).numpy())])
+    per_layer_calc = PerLayerCalculation()
+    expected_neural_persistences_level_0 = per_layer_calc(expected_dict_level_0)
+    expected_neural_persistences_level_1 = per_layer_calc(expected_dict_level_1)
+    return expected_neural_persistences_level_0, expected_neural_persistences_level_1
 
 
 class TestSparsityAccuracyExperiment(unittest.TestCase):
