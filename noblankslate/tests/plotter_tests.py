@@ -20,7 +20,7 @@ class ConcretePlotter(plotters.PlotterBaseClass):
     save_file_name = "ConcretePlotter_plot.png"
 
     def plot_data(self, axis, x_values, y_values):
-        pass
+        axis.plot(x_values, y_values)
 
 
 class TestPlotterBaseClass(unittest.TestCase):
@@ -127,6 +127,16 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
 
         self.assertTrue(plotter.axis.xaxis_inverted())
 
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.SparsityAccuracyReplicatePlotter()
+            x_data = np.arange(3)
+            y_data = np.ones(3)
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
+
 
 class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
     def test_is_base_plotter_subclass(self):
@@ -148,12 +158,22 @@ class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
         # function that does the plotting, but not the plot itself
         plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
         x_data = np.arange(3)
-        y_data = np.ones(3)
+        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
         plotter.axis = plotter.setup_figure_and_axis()
 
         plotter.plot_data(plotter.axis, x_data, y_data)
 
         self.assertTrue(plotter.axis.xaxis_inverted())
+
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+            x_data = np.arange(3)
+            y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
 
 
 class TestReplicatePathHandler(unittest.TestCase):
