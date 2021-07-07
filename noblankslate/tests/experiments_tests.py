@@ -337,6 +337,81 @@ def get_neural_persistences_for_lottery_simplified():
     return expected_neural_persistences_level_0, expected_neural_persistences_level_1
 
 
+class TestAccuracyNeuralPersistenceOnSingleReplicateHandler(unittest.TestCase):
+    def test_is_subclass_of_SingleReplicateHandler(self):
+        valid_num_epochs = 1
+        accuracy_neural_persistence_single_replicate_handler = \
+            experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler("dummy_path", valid_num_epochs)
+
+        self.assertTrue(issubclass(experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler,
+                                   experiment.SingleReplicateHandler))
+        self.assertTrue(isinstance(accuracy_neural_persistence_single_replicate_handler,
+                                   experiment.SingleReplicateHandler))
+
+    def test_load_x_data(self):  # loads accuracies
+        expected_accuracies = [0.9644, 0.9678]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        accuracy_np_single_replicate_handler = experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
+        paths = accuracy_np_single_replicate_handler.get_paths()
+
+        accuracy_np_single_replicate_handler.load_x_data(paths)
+
+        self.assertEqual(expected_accuracies, accuracy_np_single_replicate_handler.x_data)
+
+    def test_load_y_data(self):  # loads neural persistences
+        expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        accuracy_np_single_replicate_handler = experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
+        paths = accuracy_np_single_replicate_handler.get_paths()
+
+        accuracy_np_single_replicate_handler.load_y_data(paths)
+
+        self.assertDictEqual(expected_np_level_0, accuracy_np_single_replicate_handler.y_data[0])
+        self.assertDictEqual(expected_np_level_1, accuracy_np_single_replicate_handler.y_data[1])
+
+    def test_prepare_data_for_plotting(self):
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+        accuracy_np_single_replicate_handler = experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler(
+            path_to_replicate, valid_num_epochs)
+        accuracy_np_single_replicate_handler.load_data()
+        expected_accuracy = accuracy_np_single_replicate_handler.x_data
+        expected_neural_persistence = utils.prepare_neural_persistence_for_plotting(
+            accuracy_np_single_replicate_handler.y_data)
+
+        accuracy_np_single_replicate_handler.prepare_data_for_plotting()
+
+        self.assertEqual(expected_accuracy, accuracy_np_single_replicate_handler.x_data)
+        self.assertEqual(expected_neural_persistence, accuracy_np_single_replicate_handler.y_data)
+
+    def test_set_plotter(self):
+        valid_num_epochs = 2
+        accuracy_np_single_replicate_handler = experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler(
+                "dummy_path", valid_num_epochs)
+
+        plotter = accuracy_np_single_replicate_handler.set_plotter()
+
+        self.assertTrue(isinstance(plotter, plotters.AccuracyNeuralPersistenceReplicatePlotter))
+
+    def test_evaluate_experiment(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+            assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
+            accuracy_np_single_replicate_handler = experiment.AccuracyNeuralPersistenceOnSingleReplicateHandler(
+                    path_to_replicate, valid_num_epochs)
+
+            accuracy_np_single_replicate_handler.evaluate_experiment(True, False)
+
+
 class TestSparsityAccuracyExperiment(unittest.TestCase):
     def test_sparsity_acc(self):
         expected_mean_accuracies = [np.mean([0.9644, 0.9544]), np.mean([0.9678, 0.9878])]

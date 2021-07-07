@@ -100,82 +100,6 @@ class TestPlotterBaseClass(unittest.TestCase):
         self.assertFalse(plt.get_fignums())  # an empty list is cast to False by convention
 
 
-class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
-    def test_is_base_plotter_subclass(self):
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-
-        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
-        self.assertTrue(issubclass(plotters.SparsityAccuracyReplicatePlotter, plotters.PlotterBaseClass))
-
-    def test_class_variables_set_correctly(self):
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-
-        self.assertEqual("Sparsity-Accuracy", plotter.title)
-        self.assertEqual("Sparsity", plotter.x_label)
-        self.assertEqual("Accuracy", plotter.y_label)
-        self.assertEqual("sparsity_accuracy_replicate_plot.png", plotter.save_file_name)
-
-    def test_inversion_of_x_axis(self):
-        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
-        # function that does the plotting, but not the plot itself
-        plotter = plotters.SparsityAccuracyReplicatePlotter()
-        x_data = np.arange(3)
-        y_data = np.ones(3)
-        plotter.axis = plotter.setup_figure_and_axis()
-
-        plotter.plot_data(plotter.axis, x_data, y_data)
-
-        self.assertTrue(plotter.axis.xaxis_inverted())
-
-    def test_show_plot(self):
-        # sanity check
-        if not show_no_plots_for_automated_tests:
-            plotter = plotters.SparsityAccuracyReplicatePlotter()
-            x_data = np.arange(3)
-            y_data = np.ones(3)
-            plotter.make_plot(x_data, y_data)
-
-            plotter.show_plot()
-
-
-class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
-    def test_is_base_plotter_subclass(self):
-        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
-
-        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
-        self.assertTrue(issubclass(plotters.SparsityNeuralPersistenceReplicatePlotter, plotters.PlotterBaseClass))
-
-    def test_class_variables_set_correctly(self):
-        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
-
-        self.assertEqual("Sparsity-Neural Persistence", plotter.title)
-        self.assertEqual("Sparsity", plotter.x_label)
-        self.assertEqual("Neural Persistence", plotter.y_label)
-        self.assertEqual("sparsity_neural_persistence_replicate_plot.png", plotter.save_file_name)
-
-    def test_inversion_of_x_axis(self):
-        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
-        # function that does the plotting, but not the plot itself
-        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
-        x_data = np.arange(3)
-        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
-        plotter.axis = plotter.setup_figure_and_axis()
-
-        plotter.plot_data(plotter.axis, x_data, y_data)
-
-        self.assertTrue(plotter.axis.xaxis_inverted())
-
-    def test_show_plot(self):
-        # sanity check
-        if not show_no_plots_for_automated_tests:
-            plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
-            x_data = np.arange(3)
-            y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
-            plotter.make_plot(x_data, y_data)
-
-            plotter.show_plot()
-
-
 class TestReplicatePathHandler(unittest.TestCase):
     def test_prepare_plot_dir(self):
         test_path = "./experiment_root/"
@@ -218,6 +142,164 @@ class TestReplicatePathHandler(unittest.TestCase):
 
         self.assertEqual("./test/plots/my_plot.png", path_with_trailing_slash)
         self.assertEqual("./test/plots/my_plot.png", path_wo_trailing_slash)
+
+
+class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
+    def test_is_base_plotter_subclass(self):
+        plotter = plotters.SparsityAccuracyReplicatePlotter()
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityAccuracyReplicatePlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly(self):
+        plotter = plotters.SparsityAccuracyReplicatePlotter()
+
+        self.assertEqual("Sparsity-Accuracy", plotter.title)
+        self.assertEqual("Sparsity", plotter.x_label)
+        self.assertEqual("Accuracy", plotter.y_label)
+        self.assertEqual("sparsity_accuracy_replicate_plot.png", plotter.save_file_name)
+
+    def test_axis_has_data(self):
+        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
+        # function that does the plotting, but not the plot itself
+        plotter = plotters.SparsityAccuracyReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = np.ones(3)
+        plotter.axis = plotter.setup_figure_and_axis()
+        assert not plotter.axis.has_data()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.has_data())
+
+    def test_inversion_of_x_axis(self):
+        plotter = plotters.SparsityAccuracyReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = np.ones(3)
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.xaxis_inverted())
+
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.SparsityAccuracyReplicatePlotter()
+            x_data = np.arange(3)
+            y_data = np.ones(3)
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
+
+
+class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
+    def test_is_base_plotter_subclass(self):
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityNeuralPersistenceReplicatePlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly(self):
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+
+        self.assertEqual("Sparsity-Neural Persistence", plotter.title)
+        self.assertEqual("Sparsity", plotter.x_label)
+        self.assertEqual("Neural Persistence", plotter.y_label)
+        self.assertEqual("sparsity_neural_persistence_replicate_plot.png", plotter.save_file_name)
+
+    def test_axis_has_data(self):
+        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
+        # function that does the plotting, but not the plot itself
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+        plotter.axis = plotter.setup_figure_and_axis()
+        assert not plotter.axis.has_data()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.has_data())
+
+    def test_inversion_of_x_axis(self):
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.xaxis_inverted())
+
+    def test_has_legend(self):
+        plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertIsNotNone(plotter.axis.get_legend())
+
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.SparsityNeuralPersistenceReplicatePlotter()
+            x_data = np.arange(3)
+            y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
+
+
+class TestAccuracyNeuralPersistenceReplicatePlotter(unittest.TestCase):
+    def test_is_base_plotter_subclass(self):
+        plotter = plotters.AccuracyNeuralPersistenceReplicatePlotter()
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(
+            issubclass(plotters.AccuracyNeuralPersistenceReplicatePlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly(self):
+        plotter = plotters.AccuracyNeuralPersistenceReplicatePlotter()
+
+        self.assertEqual("Accuracy-Neural Persistence", plotter.title)
+        self.assertEqual("Accuracy", plotter.x_label)
+        self.assertEqual("Neural Persistence", plotter.y_label)
+        self.assertEqual("accuracy_neural_persistence_replicate_plot.png", plotter.save_file_name)
+
+    def test_axis_has_data(self):
+        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
+        # function that does the plotting, but not the plot itself
+        plotter = plotters.AccuracyNeuralPersistenceReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+        plotter.axis = plotter.setup_figure_and_axis()
+        assert not plotter.axis.has_data()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.has_data())
+
+    def test_has_legend(self):
+        plotter = plotters.AccuracyNeuralPersistenceReplicatePlotter()
+        x_data = np.arange(3)
+        y_data = {"test1": np.ones(3), "test2": np.ones(3)*2}
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertIsNotNone(plotter.axis.get_legend())
+
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.AccuracyNeuralPersistenceReplicatePlotter()
+            x_data = np.arange(3)
+            y_data = {"test1": np.ones(3), "test2": np.ones(3) * 2}
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
 
 
 if __name__ == '__main__':

@@ -127,55 +127,32 @@ class SparsityNeuralPersistenceOnSingleReplicateHandler(SingleReplicateHandler):
         return plotters.SparsityNeuralPersistenceReplicatePlotter()
 
 
-def accuracy_neural_persistence_plot_replicate(experiment_root_path, eps, show_plot=True, save_plot=False):
-    """
-    Creates accuracy-neural persistence plots.
+class AccuracyNeuralPersistenceOnSingleReplicateHandler(SingleReplicateHandler):
+    def load_x_data(self, paths):
+        accuracies = []
+        for logger_path in paths["accuracy"]:
+            accuracies.append(utils.load_accuracy(logger_path))
+        self.x_data = accuracies
 
-    todo add option to plot layers in one and global in another plot? might be better arrangement for models with a large number of layers.
+    def load_y_data(self, paths):
+        neural_persistences = []
+        neural_pers_calc = PerLayerCalculation()
 
-    :param experiment_root_path: string, path to "lottery" type OpenLTH experiment directory
-    :param eps: int, number of training epochs
-    :param show_plot: bool, default:True
-    :param save_plot: bool, default:False, saves plot to experiment_root_path/plots/accuracy_neural_persistence.png
-    :return: tuple containing list of accuracies and list of dicts containing the neural persistences as calculated by
-    tda.PerLayerCalculation
-    """
-    paths = utils.get_paths_from_replicate(experiment_root_path, "lottery", eps)
+        # todo this is more than just loading and setting, unclear how to refactor at this point because I do not want to push around loaded models/ have to look again into how exactly this is handled in python
+        for end_model_path, mask_path in paths["model_end"]:
+            if mask_path is None:
+                neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
+            else:
+                neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
 
-    accuracies = []
-    for acc_path in paths["accuracy"]:
-        accuracies.append(utils.load_accuracy(acc_path))
+        self.y_data = neural_persistences
 
-    neural_persistences = []
-    neural_pers_calc = PerLayerCalculation()
+    def prepare_data_for_plotting(self):
+        # nothing to do for self.x_data
+        self.y_data = utils.prepare_neural_persistence_for_plotting(self.y_data)
 
-    for end_model_path, mask_path in paths["model_end"]:
-        if mask_path is None:
-            neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
-        else:
-            neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
-
-    neural_pers_for_plotting = utils.prepare_neural_persistence_for_plotting(neural_persistences)
-
-    _, p = plt.subplots(1, 1)
-
-    for key, np_plot in neural_pers_for_plotting.items():
-        p.scatter(accuracies, np_plot, label=key)
-    p.legend()
-    plt.title("Accuracy-Neural Persistence")
-    plt.xlabel("Accuracy")
-    plt.ylabel("Neural Persistence")
-
-    if save_plot:
-        plot_dir = str(Path(experiment_root_path).parent) + "/plots/"
-        if not os.path.isdir(plot_dir):
-            os.mkdir(plot_dir)
-        plt.savefig(plot_dir + "/accuracy_neural_persistence.png")
-    # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
-    if show_plot:
-        plt.show()
-
-    return accuracies, neural_persistences
+    def set_plotter(self):
+        return plotters.AccuracyNeuralPersistenceReplicatePlotter()
 
 
 def sparsity_accuracy_plot_experiment(root_path, eps, show_plot=True, save_plot=False):

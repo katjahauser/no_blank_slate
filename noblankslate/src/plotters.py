@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 
 
 class PlotterBaseClass(metaclass=abc.ABCMeta):
-
     title = abc.abstractproperty()
     x_label = abc.abstractproperty()
     y_label = abc.abstractproperty()
@@ -93,7 +92,6 @@ class ReplicatePathHandler:
 
 
 class SparsityAccuracyReplicatePlotter(PlotterBaseClass):
-
     title = "Sparsity-Accuracy"
     x_label = "Sparsity"
     y_label = "Accuracy"
@@ -105,7 +103,6 @@ class SparsityAccuracyReplicatePlotter(PlotterBaseClass):
 
 
 class SparsityNeuralPersistenceReplicatePlotter(PlotterBaseClass):
-
     title = "Sparsity-Neural Persistence"
     x_label = "Sparsity"
     y_label = "Neural Persistence"
@@ -115,4 +112,16 @@ class SparsityNeuralPersistenceReplicatePlotter(PlotterBaseClass):
         for key, np_plot in neural_persistences.items():
             axis.plot(sparsities, np_plot, label=key)
         axis.invert_xaxis()
+        axis.legend()
+
+
+class AccuracyNeuralPersistenceReplicatePlotter(PlotterBaseClass):
+    title = "Accuracy-Neural Persistence"
+    x_label = "Accuracy"
+    y_label = "Neural Persistence"
+    save_file_name = "accuracy_neural_persistence_replicate_plot.png"
+
+    def plot_data(self, axis, accuracies, neural_persistences):
+        for key, np_plot in neural_persistences.items():
+            axis.scatter(accuracies, np_plot, label=key)
         axis.legend()
