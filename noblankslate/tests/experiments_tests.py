@@ -1,4 +1,3 @@
-import pathlib
 from collections import OrderedDict
 import os.path
 import unittest
@@ -12,7 +11,6 @@ from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.experiment as experiment
 import src.plotters as plotters
 import src.utils as utils
-from utils_tests import TestModel
 
 
 show_plot_off_for_fast_tests = False
@@ -26,6 +24,20 @@ class TestSingleReplicateHandler(unittest.TestCase):
 
         self.assertTrue(issubclass(ConcreteSingleReplicateHandler, experiment.SingleReplicateHandler))
         self.assertTrue(isinstance(handler, experiment.SingleReplicateHandler))
+
+    def test_raise_if_no_valid_epoch(self):
+        eps_0 = 0
+        eps_smaller_0 = -4
+        eps_smaller_0_double = -3.5
+        eps_greater_0_double = 4.5
+        with self.assertRaises(ValueError):
+            handler = ConcreteSingleReplicateHandler("dummy_path", eps_0)
+        with self.assertRaises(ValueError):
+            handler = ConcreteSingleReplicateHandler("dummy_path", eps_smaller_0)
+        with self.assertRaises(ValueError):
+            handler = ConcreteSingleReplicateHandler("dummy_path", eps_smaller_0_double)
+        with self.assertRaises(ValueError):
+            handler = ConcreteSingleReplicateHandler("dummy_path", eps_greater_0_double)
 
     def test_load_data(self):
         expected_x_values = [1., 2., 3.]
@@ -448,4 +460,5 @@ class TestAccuracyNPPlotExperiment(unittest.TestCase):
 
 
 if __name__ == '__main__':
+
     unittest.main()

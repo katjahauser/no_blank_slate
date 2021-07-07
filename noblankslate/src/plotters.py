@@ -2,7 +2,6 @@ import abc
 import os
 from pathlib import Path
 
-import matplotlib.axes
 import matplotlib.pyplot as plt
 
 
