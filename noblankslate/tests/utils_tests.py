@@ -141,31 +141,14 @@ class TestGetPathsFromReplicate(unittest.TestCase):
             utils.get_paths_from_replicate(valid_train_path, valid_ex_type, 4)
 
 
-
 class TestGetPathsFromExperiment(unittest.TestCase):
     # todo add check that all experiments have the same number of pruning steps
     def test_loading_lottery_paths(self):
         # the directory behind lottery_path contains a placeholder for the plot directory to test that these paths are
         # not considered
         lottery_path = "resources/test_get_paths_from_experiment/lottery_1db02943c54add91e13635735031a85e/"
-        paths = [lottery_path + "replicate_{}/level_{}/main/" + "logger",
-                 lottery_path + "replicate_{}/level_{}/main/" + "sparsity_report.json",
-                 lottery_path + "replicate_{}/level_{}/main/" + "model_ep0_it0.pth",
-                 lottery_path + "replicate_{}/level_{}/main/" + "model_ep2_it0.pth",
-                 lottery_path + "replicate_{}/level_{}/main/" + "mask.pth"]
-        expected_result = {"replicate_1": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []},
-                           "replicate_2": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}}
-        for i in range(1, 3):
-            for j in range(4):
-                expected_result["replicate_{}".format(str(i))]["accuracy"].append(paths[0].format(str(i), str(j)))
-                expected_result["replicate_{}".format(str(i))]["sparsity"].append(paths[1].format(str(i), str(j)))
-                expected_result["replicate_{}".format(str(i))]["model_start"].append(paths[2].format(str(i), str(j)))
-                if j == 0:
-                    expected_result["replicate_{}".format(str(i))]["model_end"].append((paths[3].format(str(i), str(j)),
-                                                                                        None))
-                else:
-                    expected_result["replicate_{}".format(str(i))]["model_end"].append(
-                        (paths[3].format(str(i), str(j)), paths[4].format(str(i), str(j))))
+
+        expected_result = generate_expected_paths_for_lottery_experiment(lottery_path, num_replicates=2, num_levels=4)
 
         self.assertDictEqual(expected_result, utils.get_paths_from_experiment(lottery_path, "lottery", 2))
         # test correct behaviour for paths without trailing slash
@@ -197,6 +180,30 @@ class TestGetPathsFromExperiment(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             utils.get_paths_from_experiment("resources/test_get_paths_from_experiment/no_replicates", "lottery",
                                             valid_eps)
+
+
+def generate_expected_paths_for_lottery_experiment(lottery_path, num_replicates, num_levels):
+    if lottery_path[-1] != "/":
+        lottery_path = lottery_path + "/"
+    paths = [lottery_path + "replicate_{}/level_{}/main/" + "logger",
+             lottery_path + "replicate_{}/level_{}/main/" + "sparsity_report.json",
+             lottery_path + "replicate_{}/level_{}/main/" + "model_ep0_it0.pth",
+             lottery_path + "replicate_{}/level_{}/main/" + "model_ep2_it0.pth",
+             lottery_path + "replicate_{}/level_{}/main/" + "mask.pth"]
+    expected_result = {"replicate_1": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []},
+                       "replicate_2": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}}
+    for replicate_num in range(1, num_replicates + 1):
+        for level_num in range(num_levels):
+            expected_result["replicate_{}".format(str(replicate_num))]["accuracy"].append(paths[0].format(str(replicate_num), str(level_num)))
+            expected_result["replicate_{}".format(str(replicate_num))]["sparsity"].append(paths[1].format(str(replicate_num), str(level_num)))
+            expected_result["replicate_{}".format(str(replicate_num))]["model_start"].append(paths[2].format(str(replicate_num), str(level_num)))
+            if level_num == 0:
+                expected_result["replicate_{}".format(str(replicate_num))]["model_end"].append((paths[3].format(str(replicate_num), str(level_num)),
+                                                                                    None))
+            else:
+                expected_result["replicate_{}".format(str(replicate_num))]["model_end"].append(
+                    (paths[3].format(str(replicate_num), str(level_num)), paths[4].format(str(replicate_num), str(level_num))))
+    return expected_result
 
 
 class TestLoadUnmaskedWeights(unittest.TestCase):
@@ -241,7 +248,7 @@ class TestLoadSparsity(unittest.TestCase):
 
 
 class TestPrepareNeuralPersistencesForPlotting(unittest.TestCase):
-    def test_prepate_np_for_plotting(self):
+    def test_prepare_np_for_plotting(self):
         neural_pers = [{'fc_layers.0.weight': {'total_persistence': 1.0, 'total_persistence_normalized': 0.4472135954999579},
                         'fc.weight': {'total_persistence': 1.0, 'total_persistence_normalized': 0.5773502691896258},
                         'global': {'accumulated_total_persistence': 2.0, 'accumulated_total_persistence_normalized': 0.5122819323447919}},

@@ -11,6 +11,7 @@ from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.experiment as experiment
 import src.plotters as plotters
 import src.utils as utils
+import tests.utils_tests as utils_tests
 
 
 show_plot_off_for_fast_tests = False
@@ -415,6 +416,8 @@ class TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
             accuracy_np_single_replicate_evaluator.evaluate(True, False)
 
 
+# todo add get_paths tests
+
 class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
     def test_is_subclass_of_Evaluator(self):
         valid_num_epochs = 1
@@ -425,6 +428,17 @@ class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
                                    experiment.Evaluator))
         self.assertTrue(isinstance(sparsity_accuracy_experiment_evaluator,
                                    experiment.Evaluator))
+
+    def test_get_paths(self):
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        expected_paths = utils_tests.generate_expected_paths_for_lottery_experiment(experiment_path, num_replicates=2,
+                                                                                    num_levels=2)
+        valid_epochs = 2
+        evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
+
+        actual_paths = evaluator.get_paths()
+
+        self.assertDictEqual(expected_paths, actual_paths)
 
     # def test_load_x_data(self):  # loads accuracies
     #     expected_accuracies = [0.9644, 0.9678]

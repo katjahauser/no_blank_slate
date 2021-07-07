@@ -169,7 +169,8 @@ class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(Evaluator):
 
 class SparsityAccuracyExperimentEvaluator(Evaluator):
     def get_paths(self):
-        pass
+        return utils.get_paths_from_experiment(self.experiment_root_path, "lottery", self.epochs)
+
     def load_x_data(self, paths):
     # load_x_data (assert all x_data are the same for SA und SNP)
         pass
