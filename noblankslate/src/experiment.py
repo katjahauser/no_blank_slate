@@ -14,7 +14,7 @@ import src.utils as utils
 # todo add replicates to replicate plotting function save paths
 
 
-class Evaluator(metaclass=abc.ABCMeta):
+class ReplicateEvaluator(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, 'get_paths') and
@@ -25,8 +25,8 @@ class Evaluator(metaclass=abc.ABCMeta):
                 callable(subclass.load_y_data) and
                 hasattr(subclass, 'prepare_data_for_plotting') and
                 callable(subclass.prepare_data_for_plotting) and
-                hasattr(subclass, 'set_plotter') and
-                callable(subclass.set_plotter))
+                hasattr(subclass, 'get_plotter') and
+                callable(subclass.get_plotter))
 
     def __init__(self, experiment_root_path, eps):
         self.experiment_root_path = experiment_root_path
@@ -45,7 +45,7 @@ class Evaluator(metaclass=abc.ABCMeta):
     def evaluate(self, show_plot, save_plot):
         self.load_data()
         self.prepare_data_for_plotting()
-        plotter = self.set_plotter()
+        plotter = self.get_plotter()
         self.generate_plot(plotter)
         if show_plot:
             plotter.show_plot()
@@ -75,14 +75,14 @@ class Evaluator(metaclass=abc.ABCMeta):
                                   "SingleReplicateHandler.")
 
     @abc.abstractmethod
-    def set_plotter(self):
-        raise NotImplementedError("Trying to call set_plotter from abstract base class SingleReplicateHandler.")
+    def get_plotter(self):
+        raise NotImplementedError("Trying to call get_plotter from abstract base class SingleReplicateHandler.")
 
     def generate_plot(self, plotter):
         plotter.make_plot(self.x_data, self.y_data)
 
 
-class SparsityAccuracyOnSingleReplicateEvaluator(Evaluator):
+class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
@@ -101,11 +101,11 @@ class SparsityAccuracyOnSingleReplicateEvaluator(Evaluator):
     def prepare_data_for_plotting(self):
         pass  # nothing to do for this type of plot
 
-    def set_plotter(self):
+    def get_plotter(self):
         return plotters.SparsityAccuracyReplicatePlotter()
 
 
-class SparsityNeuralPersistenceOnSingleReplicateEvaluator(Evaluator):
+class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
@@ -132,11 +132,11 @@ class SparsityNeuralPersistenceOnSingleReplicateEvaluator(Evaluator):
         # nothing to do for self.x_data
         self.y_data = utils.prepare_neural_persistence_for_plotting(self.y_data)
 
-    def set_plotter(self):
+    def get_plotter(self):
         return plotters.SparsityNeuralPersistenceReplicatePlotter()
 
 
-class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(Evaluator):
+class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
     def get_paths(self):
         return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
@@ -163,16 +163,44 @@ class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(Evaluator):
         # nothing to do for self.x_data
         self.y_data = utils.prepare_neural_persistence_for_plotting(self.y_data)
 
-    def set_plotter(self):
+    def get_plotter(self):
         return plotters.AccuracyNeuralPersistenceReplicatePlotter()
 
 
-class SparsityAccuracyExperimentEvaluator(Evaluator):
+class ExperimentEvaluator(ReplicateEvaluator):
+    def __init__(self, experiment_root_path, eps):
+        super().__init__(experiment_root_path, eps)
+        self.num_replicates = self.get_num_replicates()
+
+    def get_num_replicates(self):
+        paths = self.get_paths()
+        return len(paths.keys())
+
     def get_paths(self):
         return utils.get_paths_from_experiment(self.experiment_root_path, "lottery", self.epochs)
 
+    @abc.abstractmethod
     def load_x_data(self, paths):
-        sparsities = []
+        raise NotImplementedError("Trying to call load_x_data from abstract base class SingleReplicateHandler.")
+
+    @abc.abstractmethod
+    def load_y_data(self, paths):
+        raise NotImplementedError("Trying to call load_y_data from abstract base class SingleReplicateHandler.")
+
+    @abc.abstractmethod
+    def prepare_data_for_plotting(self):
+        raise NotImplementedError("Trying to call prepare_data_for_plotting from abstract base class "
+                                  "SingleReplicateHandler.")
+
+    @abc.abstractmethod
+    def get_plotter(self):
+        raise NotImplementedError("Trying to call get_plotter from abstract base class SingleReplicateHandler.")
+
+    # todo add option to explicitely add replicate numbers
+
+
+class SparsityAccuracyExperimentEvaluator(ExperimentEvaluator):
+    def load_x_data(self, paths):
         for i, replicate in enumerate(paths.keys()):
             if i == 0:
                 first_replicate = replicate
@@ -198,62 +226,9 @@ class SparsityAccuracyExperimentEvaluator(Evaluator):
         # nothing to do for x_data
         self.y_data = (list(np.mean(self.y_data, axis=0)), list(np.std(self.y_data, axis=0)))
 
-    def set_plotter(self):
-        pass
+    def get_plotter(self):
+        return plotters.SparsityAccuracyExperimentPlotter(self.num_replicates)
 
-
-
-def sparsity_accuracy_plot_experiment(root_path, eps, show_plot=True, save_plot=False):
-    """
-    Create the sparsity-accuracy plot corresponding to a openLTH experiment with several replicates.
-
-    The mean over the accuracies is plotted including the std. deviation as error bars. It is asserted that the
-    sparsities of all replicates are the same to detect errors from mixing things up.
-
-    :param root_path: experiment root directory, i.e. the directory in which the replicate live and in which the plots
-    directory will be created.
-    :param eps: number of training epochs
-    :param show_plot: bool, default: True, shows plot
-    :param save_plot: bool, default: False, saves plot to root_path/plots/sparsity_accuracy_experiment.png
-    :return: three lists of floats, the first for sparsities, the second for mean accuracies at each pruning step, the
-    last for the standard deviation at each pruning step.
-    """
-
-    paths = utils.get_paths_from_experiment(root_path, "lottery", eps)
-    accuracies = np.ones((len(paths.keys()), len(paths["replicate_1"]["accuracy"]))) * (-1)
-    for i, replicate in enumerate(paths.keys()):
-        accuracies[i] = [utils.load_accuracy(acc) for acc in paths[replicate]["accuracy"]]
-    means = list(np.mean(accuracies, axis=0))
-    stds = list(np.std(accuracies, axis=0))
-
-    sparsities = [utils.load_sparsity(spars) for spars in paths["replicate_1"]["sparsity"]]
-
-    for replicate in paths.keys():
-        if replicate != "replicate_1":
-            sparsities_to_be_checked = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
-            assert sparsities_to_be_checked == sparsities, \
-                "The sparsities in replicate {} differ from the sparsities in the first replicate. {} and {} " \
-                "respectively. Make sure you did not mix any experiments.".format(replicate, sparsities_to_be_checked,
-                                                                                  sparsities)
-
-    _, p = plt.subplots(1, 1)
-    p.errorbar(sparsities, means, stds)
-    p.invert_xaxis()
-    plt.title("Sparsity-Accuracy over {} runs".format(len(paths.keys())))
-    plt.xlabel("Sparsity")
-    plt.ylabel("Accuracy")
-
-    if save_plot:
-        if root_path[-1] != "/":
-            root_path = root_path + "/"
-        if not os.path.isdir(root_path + "plots/"):
-            os.mkdir(root_path + "plots/")
-        plt.savefig(root_path + "plots/sparsity_accuracy_experiment.png")
-    # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
-    if show_plot:
-        plt.show()
-
-    return sparsities, means, stds
 
 
 def sparsity_neural_persistence_plot_experiment(root_path, eps, show_plot=True, save_plot=False):

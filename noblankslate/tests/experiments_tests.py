@@ -19,12 +19,12 @@ show_plot_off_for_fast_tests = False
 show_no_plots_for_automated_tests = True
 
 
-class TestEvaluator(unittest.TestCase):
-    def test_is_subclass_of_Evaluator(self):
-        evaluator = ConcreteEvaluator("dummy_path", 1)
+class TestReplicateEvaluator(unittest.TestCase):
+    def test_is_subclass_of_ReplicateEvaluator(self):
+        evaluator = ConcreteReplicateEvaluator("dummy_path", 1)
 
-        self.assertTrue(issubclass(ConcreteEvaluator, experiment.Evaluator))
-        self.assertTrue(isinstance(evaluator, experiment.Evaluator))
+        self.assertTrue(issubclass(ConcreteReplicateEvaluator, experiment.ReplicateEvaluator))
+        self.assertTrue(isinstance(evaluator, experiment.ReplicateEvaluator))
 
     def test_raise_if_no_valid_epoch(self):
         eps_0 = 0
@@ -32,13 +32,13 @@ class TestEvaluator(unittest.TestCase):
         eps_smaller_0_double = -3.5
         eps_greater_0_double = 4.5
         with self.assertRaises(ValueError):
-            evaluator = ConcreteEvaluator("dummy_path", eps_0)
+            ConcreteReplicateEvaluator("dummy_path", eps_0)
         with self.assertRaises(ValueError):
-            evaluator = ConcreteEvaluator("dummy_path", eps_smaller_0)
+            ConcreteReplicateEvaluator("dummy_path", eps_smaller_0)
         with self.assertRaises(ValueError):
-            evaluator = ConcreteEvaluator("dummy_path", eps_smaller_0_double)
+            ConcreteReplicateEvaluator("dummy_path", eps_smaller_0_double)
         with self.assertRaises(ValueError):
-            evaluator = ConcreteEvaluator("dummy_path", eps_greater_0_double)
+            ConcreteReplicateEvaluator("dummy_path", eps_greater_0_double)
 
     def test_load_data(self):
         expected_x_values = [1., 2., 3.]
@@ -46,7 +46,7 @@ class TestEvaluator(unittest.TestCase):
         valid_num_epochs = 2
         path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
         assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
-        evaluator = ConcreteEvaluator(path_to_replicate, valid_num_epochs)
+        evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
         assert evaluator.x_data == [] and evaluator.y_data == []
 
         evaluator.load_data()
@@ -54,18 +54,18 @@ class TestEvaluator(unittest.TestCase):
         self.assertEqual(expected_x_values, evaluator.x_data)
         self.assertEqual(expected_y_values, evaluator.y_data)
 
-    def test_set_plotter(self):
+    def test_get_plotter(self):
         valid_num_epochs = 2
-        evaluator = ConcreteEvaluator("dummy_path", valid_num_epochs)
+        evaluator = ConcreteReplicateEvaluator("dummy_path", valid_num_epochs)
 
-        plotter = evaluator.set_plotter()
+        plotter = evaluator.get_plotter()
 
         self.assertTrue(isinstance(plotter, MockPlotter))
 
     def test_generate_plot(self):
         valid_num_epochs = 2
-        evaluator = ConcreteEvaluator("dummy_path", valid_num_epochs)
-        plotter = evaluator.set_plotter()
+        evaluator = ConcreteReplicateEvaluator("dummy_path", valid_num_epochs)
+        plotter = evaluator.get_plotter()
 
         evaluator.generate_plot(plotter)
 
@@ -79,8 +79,8 @@ class TestEvaluator(unittest.TestCase):
             valid_num_epochs = 2
             path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
             assert os.path.exists(path_to_replicate)
-            evaluator = ConcreteEvaluator(path_to_replicate, valid_num_epochs)
-            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteEvaluator_plot.png"
+            evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteReplicateEvaluator_plot.png"
             remove_target_file_if_exists(target_file)
 
             evaluator.evaluate(show_plot=True, save_plot=True)
@@ -95,23 +95,23 @@ class TestEvaluator(unittest.TestCase):
             valid_num_epochs = 2
             path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
             assert os.path.exists(path_to_replicate)
-            evaluator = ConcreteEvaluator(path_to_replicate, valid_num_epochs)
-            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteEvaluator_plot.png"
+            evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+            target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteReplicateEvaluator_plot.png"
             remove_target_file_if_exists(target_file)
 
             evaluator.evaluate(show_plot=True, save_plot=False)
 
             self.assertFalse(os.path.exists(target_file))
         else:
-            print("Ignoring TestSparsityAccuracyOnSingleReplicateEvaluator.test_evaluate_experiment_show_but_no_save to "
-                  "allow automated testing.")
+            print("Ignoring TestSparsityAccuracyOnSingleReplicateEvaluator.test_evaluate_experiment_show_but_no_save "
+                  "to allow automated testing.")
 
     def test_evaluate_experiment_no_show_but_save(self):
         valid_num_epochs = 2
         path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
         assert os.path.exists(path_to_replicate)
-        evaluator = ConcreteEvaluator(path_to_replicate, valid_num_epochs)
-        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteEvaluator_plot.png"
+        evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteReplicateEvaluator_plot.png"
         remove_target_file_if_exists(target_file)
 
         evaluator.evaluate(show_plot=False, save_plot=True)
@@ -122,8 +122,8 @@ class TestEvaluator(unittest.TestCase):
         valid_num_epochs = 2
         path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
         assert os.path.exists(path_to_replicate)
-        evaluator = ConcreteEvaluator(path_to_replicate, valid_num_epochs)
-        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteEvaluator_plot.png"
+        evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+        target_file = "./resources/test_plots/lottery_simplified/plots/ConcreteReplicateEvaluator_plot.png"
         remove_target_file_if_exists(target_file)
 
         evaluator.evaluate(show_plot=False, save_plot=False)
@@ -131,8 +131,8 @@ class TestEvaluator(unittest.TestCase):
         self.assertFalse(os.path.exists(target_file))
 
 
-class ConcreteEvaluator(experiment.Evaluator):
-    # mock implementation for testing non-abstract methods in Evaluator.
+class ConcreteReplicateEvaluator(experiment.ReplicateEvaluator):
+    # mock implementation for testing non-abstract methods in ReplicateEvaluator.
     def get_paths(self):
         return ""
 
@@ -145,15 +145,15 @@ class ConcreteEvaluator(experiment.Evaluator):
     def prepare_data_for_plotting(self):
         pass
 
-    def set_plotter(self):
+    def get_plotter(self):
         return MockPlotter()
 
 
 class MockPlotter(plotters.PlotterBaseClass):
-    title = "ConcreteEvaluator title"
-    x_label = "ConcreteEvaluator x-label"
-    y_label = "ConcreteEvaluator y-label"
-    save_file_name = "ConcreteEvaluator_plot.png"
+    title = "ConcreteReplicateEvaluator title"
+    x_label = "ConcreteReplicateEvaluator x-label"
+    y_label = "ConcreteReplicateEvaluator y-label"
+    save_file_name = "ConcreteReplicateEvaluator_plot.png"
 
     def plot_data(self, axis, x_values, y_values):
         axis.plot(x_values, y_values)
@@ -163,16 +163,18 @@ def check_simplified_lottery_experiment_replicate_exists(path_to_replicate):
     if path_to_replicate[-1] != "/":
         path_to_replicate = path_to_replicate + "/"
 
-    return (os.path.exists(path_to_replicate + "level_0/main/model_ep0_it0.pth") and
-            os.path.exists(path_to_replicate + "level_0/main/model_ep2_it0.pth") and
-            os.path.exists(path_to_replicate + "level_1/main/model_ep0_it0.pth") and
-            os.path.exists(path_to_replicate + "level_1/main/model_ep2_it0.pth") and
-            os.path.exists(path_to_replicate + "level_0/main/mask.pth") and
-            os.path.exists(path_to_replicate + "level_1/main/mask.pth") and
-            os.path.exists(path_to_replicate + "level_0/main/logger") and
-            os.path.exists(path_to_replicate + "level_1/main/logger") and
-            os.path.exists(path_to_replicate + "level_0/main/sparsity_report.json") and
-            os.path.exists(path_to_replicate + "level_1/main/sparsity_report.json"))
+    assert os.path.exists(path_to_replicate + "level_0/main/model_ep0_it0.pth")
+    assert os.path.exists(path_to_replicate + "level_0/main/model_ep2_it0.pth")
+    assert os.path.exists(path_to_replicate + "level_1/main/model_ep0_it0.pth")
+    assert os.path.exists(path_to_replicate + "level_1/main/model_ep2_it0.pth")
+    assert os.path.exists(path_to_replicate + "level_0/main/mask.pth")
+    assert os.path.exists(path_to_replicate + "level_1/main/mask.pth")
+    assert os.path.exists(path_to_replicate + "level_0/main/logger")
+    assert os.path.exists(path_to_replicate + "level_1/main/logger")
+    assert os.path.exists(path_to_replicate + "level_0/main/sparsity_report.json")
+    assert os.path.exists(path_to_replicate + "level_1/main/sparsity_report.json")
+
+    return True
 
 
 def remove_target_file_if_exists(target_file):
@@ -182,12 +184,12 @@ def remove_target_file_if_exists(target_file):
 
 
 class TestSparsityAccuracyOnSingleReplicateEvaluator(unittest.TestCase):
-    def test_is_subclass_of_Evaluator(self):
-        sparsity_accuracy_single_replicate_evaluator = experiment.SparsityAccuracyOnSingleReplicateEvaluator("dummy_path",
-                                                                                                           1)
+    def test_is_subclass_of_ReplicateEvaluator(self):
+        sparsity_accuracy_single_replicate_evaluator = \
+            experiment.SparsityAccuracyOnSingleReplicateEvaluator("dummy_path", 1)
         self.assertTrue(issubclass(experiment.SparsityAccuracyOnSingleReplicateEvaluator,
-                                   experiment.Evaluator))
-        self.assertTrue(isinstance(sparsity_accuracy_single_replicate_evaluator, experiment.Evaluator))
+                                   experiment.ReplicateEvaluator))
+        self.assertTrue(isinstance(sparsity_accuracy_single_replicate_evaluator, experiment.ReplicateEvaluator))
 
     def test_get_paths(self):
         experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
@@ -240,12 +242,12 @@ class TestSparsityAccuracyOnSingleReplicateEvaluator(unittest.TestCase):
         self.assertEqual(expected_sparsity, sparsity_accuracy_single_replicate_evaluator.x_data)
         self.assertEqual(expected_accuracy, sparsity_accuracy_single_replicate_evaluator.y_data)
 
-    def test_set_plotter(self):
+    def test_get_plotter(self):
         valid_num_epochs = 2
         sparsity_accuracy_single_replicate_evaluator = experiment.SparsityAccuracyOnSingleReplicateEvaluator(
             "dummy_path", valid_num_epochs)
 
-        plotter = sparsity_accuracy_single_replicate_evaluator.set_plotter()
+        plotter = sparsity_accuracy_single_replicate_evaluator.get_plotter()
 
         self.assertTrue(isinstance(plotter, plotters.SparsityAccuracyReplicatePlotter))
 
@@ -262,15 +264,15 @@ class TestSparsityAccuracyOnSingleReplicateEvaluator(unittest.TestCase):
 
 
 class TestSparsityNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase):
-    def test_is_subclass_of_Evaluator(self):
+    def test_is_subclass_of_ReplicateEvaluator(self):
         valid_num_epochs = 1
         sparsity_neural_persistence_single_replicate_evaluator = \
             experiment.SparsityNeuralPersistenceOnSingleReplicateEvaluator("dummy_path", valid_num_epochs)
 
         self.assertTrue(issubclass(experiment.SparsityNeuralPersistenceOnSingleReplicateEvaluator,
-                                   experiment.Evaluator))
+                                   experiment.ReplicateEvaluator))
         self.assertTrue(isinstance(sparsity_neural_persistence_single_replicate_evaluator,
-                                   experiment.Evaluator))
+                                   experiment.ReplicateEvaluator))
 
     def test_get_paths(self):
         experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
@@ -325,12 +327,12 @@ class TestSparsityNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
         self.assertEqual(expected_sparsity, sparsity_np_single_replicate_evaluator.x_data)
         self.assertEqual(expected_neural_persistence, sparsity_np_single_replicate_evaluator.y_data)
 
-    def test_set_plotter(self):
+    def test_get_plotter(self):
         valid_num_epochs = 2
         sparsity_np_single_replicate_evaluator = experiment.SparsityNeuralPersistenceOnSingleReplicateEvaluator(
                 "dummy_path", valid_num_epochs)
 
-        plotter = sparsity_np_single_replicate_evaluator.set_plotter()
+        plotter = sparsity_np_single_replicate_evaluator.get_plotter()
 
         self.assertTrue(isinstance(plotter, plotters.SparsityNeuralPersistenceReplicatePlotter))
 
@@ -362,15 +364,15 @@ def get_neural_persistences_for_lottery_simplified():
 
 
 class TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase):
-    def test_is_subclass_of_Evaluator(self):
+    def test_is_subclass_of_ReplicateEvaluator(self):
         valid_num_epochs = 1
         accuracy_neural_persistence_single_replicate_evaluator = \
             experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator("dummy_path", valid_num_epochs)
 
         self.assertTrue(issubclass(experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator,
-                                   experiment.Evaluator))
+                                   experiment.ReplicateEvaluator))
         self.assertTrue(isinstance(accuracy_neural_persistence_single_replicate_evaluator,
-                                   experiment.Evaluator))
+                                   experiment.ReplicateEvaluator))
 
     def test_get_paths(self):
         experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
@@ -425,12 +427,12 @@ class TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
         self.assertEqual(expected_accuracy, accuracy_np_single_replicate_evaluator.x_data)
         self.assertEqual(expected_neural_persistence, accuracy_np_single_replicate_evaluator.y_data)
 
-    def test_set_plotter(self):
+    def test_get_plotter(self):
         valid_num_epochs = 2
         accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(
                 "dummy_path", valid_num_epochs)
 
-        plotter = accuracy_np_single_replicate_evaluator.set_plotter()
+        plotter = accuracy_np_single_replicate_evaluator.get_plotter()
 
         self.assertTrue(isinstance(plotter, plotters.AccuracyNeuralPersistenceReplicatePlotter))
 
@@ -446,27 +448,74 @@ class TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
             accuracy_np_single_replicate_evaluator.evaluate(True, False)
 
 
-class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
-    def test_is_subclass_of_Evaluator(self):
-        valid_num_epochs = 1
-        sparsity_accuracy_experiment_evaluator = experiment.SparsityAccuracyExperimentEvaluator("dummy_path",
-                                                                                              valid_num_epochs)
+class TestExperimentEvaluator(unittest.TestCase):
+    def test_subclassing(self):
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_num_epochs = 2
+        evaluator = ConcreteExperimentEvaluator(valid_experiment_path, valid_num_epochs)
 
-        self.assertTrue(issubclass(experiment.SparsityAccuracyExperimentEvaluator,
-                                   experiment.Evaluator))
-        self.assertTrue(isinstance(sparsity_accuracy_experiment_evaluator,
-                                   experiment.Evaluator))
+        self.assertTrue(isinstance(evaluator, experiment.ExperimentEvaluator))
+        self.assertTrue(issubclass(ConcreteExperimentEvaluator, experiment.ExperimentEvaluator))
+        self.assertTrue(issubclass(ConcreteExperimentEvaluator, experiment.ReplicateEvaluator))
+
+    def test_initialization(self):
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_num_epochs = 2
+        expected_num_replicates = 2
+
+        evaluator = ConcreteExperimentEvaluator(valid_experiment_path, valid_num_epochs)
+
+        self.assertEqual(expected_num_replicates, evaluator.num_replicates)
+
+    def test_get_num_replicates(self):
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_num_epochs = 2
+        expected_num_replicates = 2
+        evaluator = ConcreteExperimentEvaluator(valid_experiment_path, valid_num_epochs)
+
+        actual_num_replicates = evaluator.get_num_replicates()
+
+        self.assertEqual(expected_num_replicates, actual_num_replicates)
 
     def test_get_paths(self):
         experiment_path = "./resources/test_plots/lottery_simplified_experiment"
         expected_paths = utils_tests.generate_expected_paths_for_lottery_experiment(experiment_path, num_replicates=2,
                                                                                     num_levels=2)
         valid_epochs = 2
-        evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator = ConcreteExperimentEvaluator(experiment_path, valid_epochs)
 
         actual_paths = evaluator.get_paths()
 
         self.assertDictEqual(expected_paths, actual_paths)
+
+
+class ConcreteExperimentEvaluator(experiment.ExperimentEvaluator):
+    def load_x_data(self, paths):
+        pass
+
+    def load_y_data(self, paths):
+        pass
+
+    def prepare_data_for_plotting(self):
+        pass
+
+    def get_plotter(self):
+        pass
+
+
+class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
+    def test_subclassing(self):
+        valid_num_epochs = 2
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        sparsity_accuracy_experiment_evaluator = \
+            experiment.SparsityAccuracyExperimentEvaluator(valid_experiment_path, valid_num_epochs)
+
+        self.assertTrue(isinstance(sparsity_accuracy_experiment_evaluator,
+                                   experiment.ExperimentEvaluator))
+        self.assertTrue(issubclass(experiment.SparsityAccuracyExperimentEvaluator,
+                                   experiment.ExperimentEvaluator))
+        self.assertTrue(issubclass(experiment.SparsityAccuracyExperimentEvaluator,
+                                   experiment.ReplicateEvaluator))
 
     def test_load_x_data(self):  # load sparsities
         expected_sparsities = [1.0, 212959.0/266200.0]
@@ -517,60 +566,23 @@ class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
         for i in range(len(expected_std_devs)):
             self.assertAlmostEqual(expected_std_devs[i], evaluator.y_data[1][i])
 
-    # def test_set_plotter(self):
-    #     valid_num_epochs = 2
-    #     accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(
-    #             "dummy_path", valid_num_epochs)
-    #
-    #     plotter = accuracy_np_single_replicate_evaluator.set_plotter()
-    #
-    #     self.assertTrue(isinstance(plotter, plotters.AccuracyNeuralPersistenceReplicatePlotter))
-    #
-    # def test_evaluate_experiment(self):
-    #     # sanity check
-    #     if not show_no_plots_for_automated_tests:
-    #         valid_num_epochs = 2
-    #         path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
-    #         assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
-    #         accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(
-    #                 path_to_replicate, valid_num_epochs)
-    #
-    #         accuracy_np_single_replicate_evaluator.evaluate_experiment(True, False)
+    def test_get_plotter(self):
+        valid_epochs = 2
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        evaluator = experiment.SparsityAccuracyExperimentEvaluator(valid_experiment_path, valid_epochs)
 
+        plotter = evaluator.get_plotter()
 
+        self.assertTrue(isinstance(plotter, plotters.SparsityAccuracyExperimentPlotter))
 
-class TestSparsityAccuracyExperiment(unittest.TestCase):
-    def test_sparsity_acc(self):
-        expected_mean_accuracies = [np.mean([0.9644, 0.9544]), np.mean([0.9678, 0.9878])]
-        expected_std_accuracies = [np.std([0.9644, 0.9544]), np.std([0.9678, 0.9878])]
-        expected_sparsities = [1.0, 212959.0/266200.0]
+    def test_evaluate_experiment(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+            evaluator = experiment.SparsityAccuracyExperimentEvaluator(valid_experiment_path, valid_num_epochs)
 
-        sparsities, mean_accuracies, std_accuracies = experiment.sparsity_accuracy_plot_experiment(
-            "./resources/test_plots/lottery_simplified_experiment/", 2,
-            show_plot=True, #show_plot_off_for_fast_tests, todo reset
-            save_plot=False)
-
-        self.assertEqual(expected_sparsities, sparsities)
-        self.assertEqual(expected_mean_accuracies, mean_accuracies)
-        self.assertEqual(expected_std_accuracies, std_accuracies)
-
-    def test_equal_sparsity_lengths(self):
-        with self.assertRaises(AssertionError):
-            experiment.sparsity_accuracy_plot_experiment(
-                "./resources/test_plots/lottery_simplified_experiment_unequal_sparsities", 2,
-                show_plot=show_plot_off_for_fast_tests, save_plot=False)
-
-    def test_save_plot(self):
-        if os.path.isfile("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png"):
-            os.remove("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png")
-
-        assert not os.path.exists(
-            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png")
-
-        _, _, _ = experiment.sparsity_accuracy_plot_experiment("./resources/test_plots/lottery_simplified_experiment/",
-                                                               2, show_plot=show_plot_off_for_fast_tests, save_plot=True)
-        self.assertTrue(os.path.isfile(
-            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_accuracy_experiment.png"))
+            evaluator.evaluate(True, False)
 
 
 class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
@@ -611,7 +623,7 @@ class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
     def test_equal_sparsity_lengths(self):
         with self.assertRaises(AssertionError):
             experiment.sparsity_neural_persistence_plot_experiment(
-                "./resources/test_plots/lottery_simplified_experiment_unequal_sparsities", 2,
+                "./resources/test_get_paths_from_experiment/lottery_simplified_experiment_unequal_sparsities", 2,
                 show_plot=show_plot_off_for_fast_tests, save_plot=False)
 
     def test_save_plot(self):
