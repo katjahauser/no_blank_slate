@@ -499,23 +499,24 @@ class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
 
         np.testing.assert_array_equal(expected_accuracies, evaluator.y_data)
 
+    def test_prepare_data_for_plotting(self):
+        accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
+        expected_means = [0.9594, 0.9778]
+        expected_std_devs = [0.005, 0.01]
+        expected_sparsities = [1.0, 212959.0/266200.0]
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.load_data()
+        assert evaluator.x_data == expected_sparsities and (evaluator.y_data == accuracies).all()
 
-    # def test_prepare_data_for_plotting(self):
-    #     valid_num_epochs = 2
-    #     path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
-    #     assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
-    #     accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(
-    #         path_to_replicate, valid_num_epochs)
-    #     accuracy_np_single_replicate_evaluator.load_data()
-    #     expected_accuracy = accuracy_np_single_replicate_evaluator.x_data
-    #     expected_neural_persistence = utils.prepare_neural_persistence_for_plotting(
-    #         accuracy_np_single_replicate_evaluator.y_data)
-    #
-    #     accuracy_np_single_replicate_evaluator.prepare_data_for_plotting()
-    #
-    #     self.assertEqual(expected_accuracy, accuracy_np_single_replicate_evaluator.x_data)
-    #     self.assertEqual(expected_neural_persistence, accuracy_np_single_replicate_evaluator.y_data)
-    #
+        evaluator.prepare_data_for_plotting()
+
+        self.assertEqual(expected_sparsities, evaluator.x_data)
+        self.assertEqual(expected_means, evaluator.y_data[0])
+        for i in range(len(expected_std_devs)):
+            self.assertAlmostEqual(expected_std_devs[i], evaluator.y_data[1][i])
+
     # def test_set_plotter(self):
     #     valid_num_epochs = 2
     #     accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(

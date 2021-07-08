@@ -195,8 +195,9 @@ class SparsityAccuracyExperimentEvaluator(Evaluator):
         self.y_data = accuracies
 
     def prepare_data_for_plotting(self):
-        # create means and std devs
-        pass
+        # nothing to do for x_data
+        self.y_data = (list(np.mean(self.y_data, axis=0)), list(np.std(self.y_data, axis=0)))
+
     def set_plotter(self):
         pass
 
