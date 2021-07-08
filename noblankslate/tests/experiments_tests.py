@@ -468,33 +468,38 @@ class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
 
         self.assertDictEqual(expected_paths, actual_paths)
 
-    # def test_load_x_data(self):  # loads accuracies
-    #     expected_accuracies = [0.9644, 0.9678]
-    #     valid_num_epochs = 2
-    #     path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
-    #     assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
-    #     accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(
-    #         path_to_replicate, valid_num_epochs)
-    #     paths = accuracy_np_single_replicate_evaluator.get_paths()
-    #
-    #     accuracy_np_single_replicate_evaluator.load_x_data(paths)
-    #
-    #     self.assertEqual(expected_accuracies, accuracy_np_single_replicate_evaluator.x_data)
-    #
-    # def test_load_y_data(self):  # loads neural persistences
-    #     expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
-    #     valid_num_epochs = 2
-    #     path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
-    #     assert check_simplified_lottery_experiment_replicate_exists(path_to_replicate)
-    #     accuracy_np_single_replicate_evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(
-    #         path_to_replicate, valid_num_epochs)
-    #     paths = accuracy_np_single_replicate_evaluator.get_paths()
-    #
-    #     accuracy_np_single_replicate_evaluator.load_y_data(paths)
-    #
-    #     self.assertDictEqual(expected_np_level_0, accuracy_np_single_replicate_evaluator.y_data[0])
-    #     self.assertDictEqual(expected_np_level_1, accuracy_np_single_replicate_evaluator.y_data[1])
-    #
+    def test_load_x_data(self):  # load sparsities
+        expected_sparsities = [1.0, 212959.0/266200.0]
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
+        paths = evaluator.get_paths()
+
+        evaluator.load_x_data(paths)
+
+        self.assertEqual(expected_sparsities, evaluator.x_data)
+
+    def test_load_x_data_on_unequal_sparsities_raises(self):
+        experiment_path = "./resources/test_get_paths_from_experiment/lottery_simplified_experiment_unequal_sparsities"
+        valid_epochs = 2
+        evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
+        paths = evaluator.get_paths()
+
+        with self.assertRaises(AssertionError):
+            evaluator.load_x_data(paths)
+
+    def test_load_y_data(self):  # load accuracies
+        expected_accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
+        paths = evaluator.get_paths()
+
+        evaluator.load_y_data(paths)
+
+        np.testing.assert_array_equal(expected_accuracies, evaluator.y_data)
+
+
     # def test_prepare_data_for_plotting(self):
     #     valid_num_epochs = 2
     #     path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"

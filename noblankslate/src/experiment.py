@@ -172,12 +172,30 @@ class SparsityAccuracyExperimentEvaluator(Evaluator):
         return utils.get_paths_from_experiment(self.experiment_root_path, "lottery", self.epochs)
 
     def load_x_data(self, paths):
-    # load_x_data (assert all x_data are the same for SA und SNP)
-        pass
+        sparsities = []
+        for i, replicate in enumerate(paths.keys()):
+            if i == 0:
+                first_replicate = replicate
+                sparsities = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+            else:
+                sparsities_to_be_checked = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+                assert sparsities_to_be_checked == sparsities, \
+                    "The sparsities in replicate {} differ from the sparsities in replicate {}, although they should " \
+                    "be equal. The sparsities in question are {} and {} respectively. Please make sure that you did " \
+                    "not mix up any experiments.".format(replicate, first_replicate, sparsities_to_be_checked,
+                                                         sparsities)
+        self.x_data = sparsities
+
     def load_y_data(self, paths):
-    # load_y_data and create means and std devs
-        pass
+        for i, replicate in enumerate(paths.keys()):
+            if i == 0:
+                accuracies = np.ones((len(paths.keys()), len(paths[replicate]["accuracy"]))) * (-1)
+            accuracies[i] = [utils.load_accuracy(acc) for acc in paths[replicate]["accuracy"]]
+
+        self.y_data = accuracies
+
     def prepare_data_for_plotting(self):
+        # create means and std devs
         pass
     def set_plotter(self):
         pass
