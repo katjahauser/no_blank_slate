@@ -375,13 +375,51 @@ class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
         self.assertTrue(
             issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.PlotterBaseClass))
 
-    def test_class_variables_set_correctly(self):
+    def test_class_variables_set_correctly_wo_num_replicate(self):
         plotter = plotters.SparsityAccuracyExperimentPlotter()
 
-        self.assertEqual("Sparsity-Accuracy over 2 runs", plotter.title)
+        self.assertEqual("Sparsity-Accuracy Experiment", plotter.title)
         self.assertEqual("Sparsity", plotter.x_label)
         self.assertEqual("Accuracy", plotter.y_label)
         self.assertEqual("sparsity_accuracy_experiment_plot.png", plotter.save_file_name)
+
+    def test_title_set_correctly_with_num_replicate(self):
+        plotter = plotters.SparsityAccuracyExperimentPlotter(2)
+
+        self.assertEqual("Sparsity-Accuracy Experiment over 2 replicates", plotter.title)
+
+    def test_axis_has_data(self):
+        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
+        # function that does the plotting, but not the plot itself
+        plotter = plotters.SparsityAccuracyExperimentPlotter()
+        x_data = list(np.arange(3))
+        y_data = (list(np.ones(3)), list(np.arange(3)*0.5))
+        plotter.axis = plotter.setup_figure_and_axis()
+        assert not plotter.axis.has_data()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.has_data())
+
+    def test_inversion_of_x_axis(self):
+        plotter = plotters.SparsityAccuracyExperimentPlotter()
+        x_data = list(np.arange(3))
+        y_data = (list(np.ones(3)), list(np.arange(3)*0.5))
+        axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(axis, x_data, y_data)
+
+        self.assertTrue(axis.xaxis_inverted())
+
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.SparsityAccuracyExperimentPlotter(3)
+            x_data = list(np.arange(3))
+            y_data = (list(np.ones(3)), list(np.arange(3)*0.5))
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
 
 
 if __name__ == '__main__':

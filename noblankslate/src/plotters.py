@@ -155,10 +155,11 @@ class ExperimentPlotterBaseClass(PlotterBaseClass):
 
 
 class SparsityAccuracyExperimentPlotter(ExperimentPlotterBaseClass):
-    title = "Sparsity-Accuracy over 2 runs"
+    title = "Sparsity-Accuracy Experiment"
     x_label = "Sparsity"
     y_label = "Accuracy"
     save_file_name = "sparsity_accuracy_experiment_plot.png"
 
     def plot_data(self, axis, x_values, y_values):
-        pass
+        axis.errorbar(x_values, y_values[0], y_values[1])
+        axis.invert_xaxis()
