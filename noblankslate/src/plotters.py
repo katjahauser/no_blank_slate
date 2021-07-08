@@ -125,3 +125,40 @@ class AccuracyNeuralPersistenceReplicatePlotter(PlotterBaseClass):
         for key, np_plot in neural_persistences.items():
             axis.scatter(accuracies, np_plot, label=key)
         axis.legend()
+
+
+class ExperimentPlotterBaseClass(PlotterBaseClass):
+    title = abc.abstractproperty()
+    x_label = abc.abstractproperty()
+    y_label = abc.abstractproperty()
+    save_file_name = abc.abstractproperty()
+
+    def __init__(self, num_replicates=None):
+        if num_replicates is not None:
+            self.title = self.generate_title_if_valid_num_replicates(num_replicates)
+
+    def generate_title_if_valid_num_replicates(self, num_replicates):
+        if num_replicates <= 0:
+            raise ValueError("The number of replicates must be greater 0.")
+        if type(num_replicates) != int:
+            raise ValueError("The number of replicates must be of type int. You provided {} of type {}."
+                             .format(num_replicates, type(num_replicates)))
+        if num_replicates == 1:
+            return self.title + " over {} replicate".format(str(num_replicates))
+        else:
+            return self.title + " over {} replicates".format(str(num_replicates))
+
+    @abc.abstractmethod
+    def plot_data(self, axis, x_values, y_values):
+        # plot_data takes an axis object to enforce calling setup_axis before calling plot_data
+        raise NotImplementedError("Trying to call plot_data of abstract class ExperimentPlotterBaseClass.")
+
+
+class SparsityAccuracyExperimentPlotter(ExperimentPlotterBaseClass):
+    title = "Sparsity-Accuracy over 2 runs"
+    x_label = "Sparsity"
+    y_label = "Accuracy"
+    save_file_name = "sparsity_accuracy_experiment_plot.png"
+
+    def plot_data(self, axis, x_values, y_values):
+        pass

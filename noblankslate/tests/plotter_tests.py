@@ -302,5 +302,87 @@ class TestAccuracyNeuralPersistenceReplicatePlotter(unittest.TestCase):
             plotter.show_plot()
 
 
+class TestExperimentPlotterBaseClass(unittest.TestCase):
+    def test_is_subclassing_correct(self):
+        plotter = ConcreteExperimentPlotter(1)
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(isinstance(plotter, plotters.ExperimentPlotterBaseClass))
+        self.assertTrue(issubclass(plotters.ExperimentPlotterBaseClass, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(ConcreteExperimentPlotter, plotters.ExperimentPlotterBaseClass))
+        self.assertTrue(issubclass(ConcreteExperimentPlotter, plotters.PlotterBaseClass))
+
+    def test_optional_set_title_upon_initialization(self):
+        expected_title_with_replicates = "ConcreteExperimentPlotter over 2 replicates"
+        expected_title_wo_replicates = "ConcreteExperimentPlotter"
+
+        plotter_with_replicates = ConcreteExperimentPlotter(2)
+        plotter_wo_replicates = ConcreteExperimentPlotter()
+
+        self.assertEqual(expected_title_with_replicates, plotter_with_replicates.title)
+        self.assertEqual(expected_title_wo_replicates, plotter_wo_replicates.title)
+
+    def test_generate_title_if_valid_num_replicates(self):
+        plotter = ConcreteExperimentPlotter()
+        expected_title = "ConcreteExperimentPlotter over 2 replicates"
+
+        actual_title = plotter.generate_title_if_valid_num_replicates(2)
+
+        self.assertEqual(expected_title, actual_title)
+
+    def test_generate_title_if_valid_num_replicates_on_1_replicate(self):
+        plotter = ConcreteExperimentPlotter(2)
+        expected_title = "ConcreteExperimentPlotter over 1 replicate"
+        plotter.title = "ConcreteExperimentPlotter"
+
+        actual_title = plotter.generate_title_if_valid_num_replicates(1)
+
+        self.assertEqual(expected_title, actual_title)
+
+    def test_generate_title_if_valid_num_replicates_raises_on_invalid_input(self):
+        equals_0 = 0
+        smaller_0 = -5
+        smaller_0_and_not_int = -9.8
+        not_int = 4.5
+        valid_num_replicates = 2
+        plotter = ConcreteExperimentPlotter(valid_num_replicates)
+
+        with self.assertRaises(ValueError):
+            plotter.generate_title_if_valid_num_replicates(equals_0)
+        with self.assertRaises(ValueError):
+            plotter.generate_title_if_valid_num_replicates(smaller_0)
+        with self.assertRaises(ValueError):
+            plotter.generate_title_if_valid_num_replicates(smaller_0_and_not_int)
+        with self.assertRaises(ValueError):
+            plotter.generate_title_if_valid_num_replicates(not_int)
+
+
+class ConcreteExperimentPlotter(plotters.ExperimentPlotterBaseClass):
+    title = "ConcreteExperimentPlotter"
+    x_label = ""
+    y_label = ""
+    save_file_name = ""
+
+    def plot_data(self, axis, x_values, y_values):
+        pass
+
+
+class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
+    def test_is_base_plotter_subclass(self):
+        plotter = plotters.SparsityAccuracyExperimentPlotter()
+
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(
+            issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly(self):
+        plotter = plotters.SparsityAccuracyExperimentPlotter()
+
+        self.assertEqual("Sparsity-Accuracy over 2 runs", plotter.title)
+        self.assertEqual("Sparsity", plotter.x_label)
+        self.assertEqual("Accuracy", plotter.y_label)
+        self.assertEqual("sparsity_accuracy_experiment_plot.png", plotter.save_file_name)
+
+
 if __name__ == '__main__':
     unittest.main()
