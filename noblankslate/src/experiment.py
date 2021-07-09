@@ -266,7 +266,47 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
         self.y_data = neural_persistences
 
     def prepare_data_for_plotting(self):
-        pass
+        # nothing to do for x_data
+        # transform y_data from
+        # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
+        #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
+        #  ...]
+        # to
+        # ({layer1: [mean_np_sparsity_lvl0, mean_np_sparsity_lvl1, ...],
+        #   layer2: [mean_np_sparsity_lvl0, mean_np_sparsity_lvl1, ...],
+        #  ...},
+        # {layer1: [std_dev_np_sparsity_lvl0, std_dev_np_sparsity_lvl1, ...],
+        #  layer2: [std_dev_np_sparsity_lvl0, std_dev_np_sparsity_lvl1, ...],
+        #  ...}
+        # )
+
+        self.reformat_neural_persistences()
+        # calculate mean and std dev todo
+        means, std_devs = {}, {}
+        self.y_data = (means, std_devs)
+
+    def reformat_neural_persistences(self):
+        reformated_np = self.create_tensor_for_reformating()
+        for replicate in range(len(self.y_data)):
+            for sparsity_level in range(len(self.x_data)):
+                for layer_number, layer_name in enumerate(self.y_data[0][0].keys()):  # implicitly guarantees that all layer names are the same
+                    reformated_np[layer_number][sparsity_level][replicate] = \
+                        self.get_normalized_neural_persistence(self.y_data[replicate][sparsity_level][layer_name])
+        self.y_data = reformated_np
+
+    def create_tensor_for_reformating(self):
+        # number of keys (= number of layers + global) for model in first replicate at first sparsity level
+        num_layers = len(self.y_data[0][0].keys())
+        # we can use this because we checked that all replicates have the same sparsities when loading the x_data
+        num_sparsity_levels = len(self.x_data)
+        return np.zeros((num_layers, num_sparsity_levels, self.num_replicates))
+
+    @staticmethod
+    def get_normalized_neural_persistence(np_dict):
+        for (key, value) in np_dict.items():
+            if "normalized" in key:
+                return value
+
 
     def get_plotter(self):
         pass
