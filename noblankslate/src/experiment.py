@@ -117,14 +117,12 @@ class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
 
     def load_y_data(self, paths):
         neural_persistences = []
-        neural_pers_calc = PerLayerCalculation()
 
-        # todo this is more than just loading and setting, unclear how to refactor at this point because I do not want to push around loaded models
         for end_model_path, mask_path in paths["model_end"]:
             if mask_path is None:
-                neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
+                neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
             else:
-                neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
+                neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
 
         self.y_data = neural_persistences
 
@@ -134,6 +132,16 @@ class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
 
     def get_plotter(self):
         return plotters.SparsityNeuralPersistenceReplicatePlotter()
+
+
+def get_neural_persistence_for_unmasked_weights(model_path):
+    neural_pers_calc = PerLayerCalculation()
+    return neural_pers_calc(utils.load_unmasked_weights(model_path))
+
+
+def get_neural_persistence_for_masked_weights(model_path, mask_path):
+    neural_pers_calc = PerLayerCalculation()
+    return neural_pers_calc(utils.load_masked_weights(model_path, mask_path))
 
 
 class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
@@ -148,14 +156,12 @@ class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
 
     def load_y_data(self, paths):
         neural_persistences = []
-        neural_pers_calc = PerLayerCalculation()
 
-        # todo this is more than just loading and setting, unclear how to refactor at this point because I do not want to push around loaded models/ have to look again into how exactly this is handled in python
         for end_model_path, mask_path in paths["model_end"]:
             if mask_path is None:
-                neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path)))
+                neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
             else:
-                neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path, mask_path)))
+                neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
 
         self.y_data = neural_persistences
 
@@ -201,18 +207,7 @@ class ExperimentEvaluator(ReplicateEvaluator):
 
 class SparsityAccuracyExperimentEvaluator(ExperimentEvaluator):
     def load_x_data(self, paths):
-        for i, replicate in enumerate(paths.keys()):
-            if i == 0:
-                first_replicate = replicate
-                sparsities = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
-            else:
-                sparsities_to_be_checked = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
-                assert sparsities_to_be_checked == sparsities, \
-                    "The sparsities in replicate {} differ from the sparsities in replicate {}, although they should " \
-                    "be equal. The sparsities in question are {} and {} respectively. Please make sure that you did " \
-                    "not mix up any experiments.".format(replicate, first_replicate, sparsities_to_be_checked,
-                                                         sparsities)
-        self.x_data = sparsities
+        self.x_data = load_sparsities_for_experiment(paths)
 
     def load_y_data(self, paths):
         for i, replicate in enumerate(paths.keys()):
@@ -229,6 +224,52 @@ class SparsityAccuracyExperimentEvaluator(ExperimentEvaluator):
     def get_plotter(self):
         return plotters.SparsityAccuracyExperimentPlotter(self.num_replicates)
 
+
+def load_sparsities_for_experiment(paths):
+    for i, replicate in enumerate(paths.keys()):
+        if i == 0:
+            first_replicate = replicate
+            sparsities = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+        else:
+            sparsities_to_be_checked = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+            assert_sparsities_equal(sparsities, sparsities_to_be_checked, first_replicate, replicate)
+    return sparsities
+
+
+def assert_sparsities_equal(expected_sparsities, actual_sparsities, key_expected_sparsities, key_actual_sparsities):
+    assert actual_sparsities == expected_sparsities, \
+        "The sparsities in replicate {} differ from the sparsities in replicate {}, although they should " \
+        "be equal. The sparsities in question are {} and {} respectively. Please make sure that you did " \
+        "not mix up any experiments.".format(key_expected_sparsities, key_actual_sparsities,
+                                             expected_sparsities, actual_sparsities)
+
+
+class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
+    def load_x_data(self, paths):  # loads sparsities
+        self.x_data = load_sparsities_for_experiment(paths)
+
+    def load_y_data(self, paths):  # loads neural persistences
+        # format:
+        # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
+        #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
+        #  ...]
+        # where each replicateX.sparsity_levelY is a dict containing the neural persistences
+        neural_persistences = []
+        for replicate in paths.keys():
+            np_for_replicate = []
+            for end_model_path, mask_path in paths[replicate]["model_end"]:
+                if mask_path is None:
+                    np_for_replicate.append(get_neural_persistence_for_unmasked_weights(end_model_path))
+                else:
+                    np_for_replicate.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
+            neural_persistences.append(np_for_replicate)
+        self.y_data = neural_persistences
+
+    def prepare_data_for_plotting(self):
+        pass
+
+    def get_plotter(self):
+        pass
 
 
 def sparsity_neural_persistence_plot_experiment(root_path, eps, show_plot=True, save_plot=False):
