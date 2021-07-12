@@ -288,8 +288,9 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
     def reformat_neural_persistences(self):
         reformated_np = self.create_tensor_for_reformating()
         for replicate in range(len(self.y_data)):
-            for sparsity_level in range(len(self.x_data)):
-                for layer_number, layer_name in enumerate(self.y_data[0][0].keys()):  # implicitly guarantees that all layer names are the same
+            for sparsity_level in range(len(self.y_data[0])):
+                # implicitly guarantees that all layer names are the same
+                for layer_number, layer_name in enumerate(self.y_data[0][0].keys()):
                     reformated_np[layer_number][sparsity_level][replicate] = \
                         self.get_normalized_neural_persistence(self.y_data[replicate][sparsity_level][layer_name])
         self.y_data = reformated_np
@@ -297,15 +298,20 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
     def create_tensor_for_reformating(self):
         # number of keys (= number of layers + global) for model in first replicate at first sparsity level
         num_layers = len(self.y_data[0][0].keys())
-        # we can use this because we checked that all replicates have the same sparsities when loading the x_data
-        num_sparsity_levels = len(self.x_data)
+        num_sparsity_levels = len(self.y_data[0])
         return np.zeros((num_layers, num_sparsity_levels, self.num_replicates))
 
     @staticmethod
-    def get_normalized_neural_persistence(np_dict):
-        for (key, value) in np_dict.items():
+    def get_normalized_neural_persistence(layer_neural_persistence_dict):
+        for (key, value) in layer_neural_persistence_dict.items():
             if "normalized" in key:
                 return value
+
+    def compute_means(self):
+        pass
+
+    def compute_std_deviations(self):
+        pass
 
 
     def get_plotter(self):

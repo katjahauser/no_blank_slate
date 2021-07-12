@@ -700,8 +700,6 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         valid_epochs = 2
         evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
         evaluator.y_data = self.setup_mock_np_with_nans()
-        paths = evaluator.get_paths()
-        evaluator.load_x_data(paths)
 
         evaluator.reformat_neural_persistences()
 
@@ -713,15 +711,27 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         valid_epochs = 2
         evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
         evaluator.y_data = self.setup_mock_np_with_nans()
-        paths = evaluator.get_paths()
-        evaluator.load_x_data(paths)
 
         actual_tensor = evaluator.create_tensor_for_reformating()
 
         np.testing.assert_array_equal(expected_tensor, actual_tensor)
 
     def test_get_normalized_neural_persistence(self):
-        self.assertTrue(False) # todo
+        layer_wise_np_dict = {'total_persistence': np.nan, 'total_persistence_normalized': 0.4472135954999579}
+        expected_value = 0.4472135954999579
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+
+        actual_value = evaluator.get_normalized_neural_persistence(layer_wise_np_dict)
+
+        self.assertEqual(expected_value, actual_value)
+
+    def test_compute_means(self):
+        pass
+
+    def test_compute_std_deviations(self):
+        pass
 
 
 class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
