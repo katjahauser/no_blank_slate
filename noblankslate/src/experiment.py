@@ -280,10 +280,17 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
         #  ...}
         # )
 
+        layer_names = self.get_layer_names()
         self.reformat_neural_persistences()
         # calculate mean and std dev todo
         means, std_devs = {}, {}
         self.y_data = (means, std_devs)
+
+    def get_layer_names(self):
+        if type(self.y_data[0][0]) is not dict:
+            raise TypeError("y_data has the wrong type ({}). You probably reformated the data before getting the layer "
+                            "names.".format(type(self.y_data[0][0])))
+        return self.y_data[0][0].keys()
 
     def reformat_neural_persistences(self):
         reformated_np = self.create_tensor_for_reformating()
@@ -308,11 +315,10 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
                 return value
 
     def compute_means(self):
-        pass
+        return np.mean(self.y_data, axis=2)
 
     def compute_std_deviations(self):
-        pass
-
+        return np.std(self.y_data, axis=2)
 
     def get_plotter(self):
         pass

@@ -1,3 +1,4 @@
+import collections.abc
 from collections import OrderedDict
 import os.path
 import unittest
@@ -670,6 +671,28 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         self.assertDictEqual(expected_neural_persistence_means, evaluator.y_data[0])
         self.assertDictEqual(expected_neural_persistence_std, evaluator.y_data[1])
 
+    def test_get_layer_names(self):
+        expected_layer_names = ['fc_layers.0.weight', 'fc.weight', 'global']
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = self.setup_mock_np_with_nans()
+
+        actual_layer_names = evaluator.get_layer_names()
+
+        self.assertTrue(isinstance(actual_layer_names, collections.abc.KeysView))
+        self.assertEqual(expected_layer_names, list(actual_layer_names))
+
+    def test_get_layer_names_raises_on_reformated_data(self):
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = self.setup_mock_np_with_nans()
+        evaluator.reformat_neural_persistences()
+
+        with self.assertRaises(TypeError):
+            evaluator.get_layer_names()
+
     @staticmethod
     def setup_mock_np_with_nans():
         # these are the neural persistences of get_neural_persistences_for_lottery_simplified() with nans for the
@@ -694,8 +717,8 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
                                        [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
                                       [[0.5773502691896258, 0.5773502691896258],   # layer 2, sparsity level 0, "
                                        [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
-                                      [[0.5122819323447919, 0.5122819323447919],   # layer 3, sparsity level 0, "
-                                       [0.724476056480701, 0.724476056480701]]])   # layer 3, sparsity level 1, "
+                                      [[0.5122819323447919, 0.5122819323447919],   # global, sparsity level 0, "
+                                       [0.724476056480701, 0.724476056480701]]])   # global, sparsity level 1, "
         experiment_path = "./resources/test_plots/lottery_simplified_experiment"
         valid_epochs = 2
         evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
@@ -728,10 +751,31 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         self.assertEqual(expected_value, actual_value)
 
     def test_compute_means(self):
-        pass
+        # we use the same values twice in the mock up
+        expected_means = np.asarray([[0.4472135954999579, 0.6324555320336759],  # layer 1, sparsity level 0 & 1
+                                     [0.5773502691896258, 0.8164965809277261],  # layer 2, sparsity level 0 & 1
+                                     [0.5122819323447919, 0.724476056480701]])  # global, sparsity level 0 & 1
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = self.setup_mock_np_with_nans()
+        evaluator.reformat_neural_persistences()
+
+        actual_means = evaluator.compute_means()
+
+        np.testing.assert_array_equal(expected_means, actual_means)
 
     def test_compute_std_deviations(self):
-        pass
+        expected_std_devs = np.zeros((3, 2))  # since we use the same values twice in the mock up
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = self.setup_mock_np_with_nans()
+        evaluator.reformat_neural_persistences()
+
+        actual_std_devs = evaluator.compute_std_deviations()
+
+        np.testing.assert_array_equal(expected_std_devs, actual_std_devs)
 
 
 class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
