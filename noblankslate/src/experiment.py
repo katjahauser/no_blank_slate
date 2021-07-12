@@ -12,6 +12,7 @@ import src.utils as utils
 # plots:
 # * NP of mask vs NP of masked weights
 # todo add replicates to replicate plotting function save paths
+# todo exchange dicts for ordered dicts where necessary
 
 
 class ReplicateEvaluator(metaclass=abc.ABCMeta):
@@ -282,8 +283,10 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
 
         layer_names = self.get_layer_names()
         self.reformat_neural_persistences()
-        # calculate mean and std dev todo
-        means, std_devs = {}, {}
+        means = self.compute_means()
+        std_devs = self.compute_std_deviations()
+        means = self.match_layer_names_to_statistic(layer_names, means)
+        std_devs = self.match_layer_names_to_statistic(layer_names, std_devs)
         self.y_data = (means, std_devs)
 
     def get_layer_names(self):
@@ -319,6 +322,13 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
 
     def compute_std_deviations(self):
         return np.std(self.y_data, axis=2)
+
+    @staticmethod
+    def match_layer_names_to_statistic(layer_names, statistic):
+        mapped_names = {}
+        for i, name in enumerate(layer_names):
+            mapped_names.update({name: statistic[i, :]})
+        return mapped_names
 
     def get_plotter(self):
         pass

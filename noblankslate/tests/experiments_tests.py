@@ -659,17 +659,22 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
                                              'fc.weight': [0.5773502691896258, 0.8164965809277261],
                                              'global': [0.5122819323447919, 0.724476056480701]}
         expected_neural_persistence_std = {'fc_layers.0.weight': [0.0, 0.0],
-                                             'fc.weight': [0.0, 0.0],
-                                             'global': [0.0, 0.0]}
+                                           'fc.weight': [0.0, 0.0],
+                                           'global': [0.0, 0.0]}
         experiment_path = "./resources/test_plots/lottery_simplified_experiment"
         valid_epochs = 2
         evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
         evaluator.y_data = mock_np
 
         evaluator.prepare_data_for_plotting()
+        actual_means = evaluator.y_data[0]
+        actual_std = evaluator.y_data[1]
 
-        self.assertDictEqual(expected_neural_persistence_means, evaluator.y_data[0])
-        self.assertDictEqual(expected_neural_persistence_std, evaluator.y_data[1])
+        self.assertEqual(expected_neural_persistence_means.keys(), actual_means.keys())
+        self.assertEqual(expected_neural_persistence_std.keys(), actual_std.keys())
+        for key in expected_neural_persistence_means.keys():
+            np.testing.assert_array_equal(expected_neural_persistence_means[key], actual_means[key])
+            np.testing.assert_array_equal(expected_neural_persistence_std[key], actual_std[key])
 
     def test_get_layer_names(self):
         expected_layer_names = ['fc_layers.0.weight', 'fc.weight', 'global']
@@ -776,6 +781,25 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         actual_std_devs = evaluator.compute_std_deviations()
 
         np.testing.assert_array_equal(expected_std_devs, actual_std_devs)
+
+    def test_match_layer_names_to_statistic(self):
+        expected_means = {'fc_layers.0.weight': [0.4472135954999579, 0.6324555320336759],
+                          'fc.weight': [0.5773502691896258, 0.8164965809277261],
+                          'global': [0.5122819323447919, 0.724476056480701]}
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = self.setup_mock_np_with_nans()
+        layer_names = evaluator.get_layer_names()
+        evaluator.reformat_neural_persistences()
+        raw_means = evaluator.compute_means()
+
+        actual_means = evaluator.match_layer_names_to_statistic(layer_names, raw_means)
+
+        self.assertEqual(expected_means.keys(), actual_means.keys())
+        for key in expected_means.keys():
+            np.testing.assert_array_equal(expected_means[key], actual_means[key])
+
 
 
 class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
