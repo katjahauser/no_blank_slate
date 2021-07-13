@@ -372,10 +372,8 @@ class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
         plotter = plotters.SparsityAccuracyExperimentPlotter()
 
         self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
-        self.assertTrue(
-            issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.ExperimentPlotterBaseClass))
-        self.assertTrue(
-            issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.ExperimentPlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.PlotterBaseClass))
 
     def test_class_variables_set_correctly_wo_num_replicate(self):
         plotter = plotters.SparsityAccuracyExperimentPlotter()
@@ -419,6 +417,90 @@ class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
             plotter = plotters.SparsityAccuracyExperimentPlotter(3)
             x_data = list(np.arange(3))
             y_data = (list(np.ones(3)), list(np.arange(3)*0.5))
+            plotter.make_plot(x_data, y_data)
+
+            plotter.show_plot()
+
+
+class TestSparsityNeuralPersistenceExperimentPlotter(unittest.TestCase):
+    def test_inheritance(self):
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter()
+
+        self.assertTrue(issubclass(plotters.SparsityNeuralPersistenceExperimentPlotter,
+                                   plotters.ExperimentPlotterBaseClass))
+        self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(issubclass(plotters.SparsityNeuralPersistenceExperimentPlotter, plotters.PlotterBaseClass))
+
+    def test_class_variables_set_correctly_wo_num_replicate(self):
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter()
+
+        self.assertEqual("Sparsity-Neural Persistence Experiment", plotter.title)
+        self.assertEqual("Sparsity", plotter.x_label)
+        self.assertEqual("Neural Persistence", plotter.y_label)
+        self.assertEqual("sparsity_neural_persistence_experiment_plot.png", plotter.save_file_name)
+
+    def test_title_set_correctly_with_num_replicate(self):
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter(2)
+
+        self.assertEqual("Sparsity-Neural Persistence Experiment over 2 replicates", plotter.title)
+
+    def test_axis_has_data(self):  # todo
+        # Following the reasoning in https://stackoverflow.com/a/27950953 I'm checking the desired output of the
+        # function that does the plotting, but not the plot itself
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter()
+        x_data, y_data = self.mock_x_data_y_data()
+        plotter.axis = plotter.setup_figure_and_axis()
+        assert not plotter.axis.has_data()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertTrue(plotter.axis.has_data())
+
+    @staticmethod
+    def mock_x_data_y_data():
+        x_data = list(np.arange(4))
+        keys = ["a", "b", "c"]
+        y_data = ({keys[i]: np.arange(4) ** i for i in range(len(keys))},
+                  {keys[i]: np.ones(4) * i for i in range(len(keys))})
+        return x_data, y_data
+
+    def test_has_legend(self):
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter()
+        x_data, y_data = self.mock_x_data_y_data()
+        plotter.axis = plotter.setup_figure_and_axis()
+        assert plotter.axis.get_legend() is None
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+
+        self.assertIsNotNone(plotter.axis.get_legend())
+
+    def test_legend_labels(self):
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter()
+        x_data, y_data = self.mock_x_data_y_data()
+        expected_labels = y_data[0].keys()
+        plotter.axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(plotter.axis, x_data, y_data)
+        actual_labels = [text.get_text() for text in plotter.axis.get_legend().get_texts()]
+
+        self.assertEqual(len(expected_labels), len(actual_labels))
+        for label in actual_labels:
+            self.assertTrue(label in expected_labels)
+
+    def test_inversion_of_x_axis(self):
+        plotter = plotters.SparsityNeuralPersistenceExperimentPlotter()
+        x_data, y_data = self.mock_x_data_y_data()
+        axis = plotter.setup_figure_and_axis()
+
+        plotter.plot_data(axis, x_data, y_data)
+
+        self.assertTrue(axis.xaxis_inverted())
+
+    def test_show_plot(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            plotter = plotters.SparsityNeuralPersistenceExperimentPlotter(4)
+            x_data, y_data = self.mock_x_data_y_data()
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
