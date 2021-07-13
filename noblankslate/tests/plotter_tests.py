@@ -303,7 +303,7 @@ class TestAccuracyNeuralPersistenceReplicatePlotter(unittest.TestCase):
 
 
 class TestExperimentPlotterBaseClass(unittest.TestCase):
-    def test_is_subclassing_correct(self):
+    def test_inheritance(self):
         plotter = ConcreteExperimentPlotter(1)
 
         self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
@@ -368,10 +368,12 @@ class ConcreteExperimentPlotter(plotters.ExperimentPlotterBaseClass):
 
 
 class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
-    def test_is_base_plotter_subclass(self):
+    def test_inheritance(self):
         plotter = plotters.SparsityAccuracyExperimentPlotter()
 
         self.assertTrue(isinstance(plotter, plotters.PlotterBaseClass))
+        self.assertTrue(
+            issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.ExperimentPlotterBaseClass))
         self.assertTrue(
             issubclass(plotters.SparsityAccuracyExperimentPlotter, plotters.PlotterBaseClass))
 
