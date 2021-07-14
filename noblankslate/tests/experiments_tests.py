@@ -88,8 +88,7 @@ class TestReplicateEvaluator(unittest.TestCase):
 
             self.assertTrue(os.path.exists(target_file))
         else:
-            print("Ignoring TestSparsityAccuracyOnSingleReplicateEvaluator.test_evaluate_experiment_show_and_save to "
-                  "allow automated testing.")
+            print("Ignoring TestReplicateEvaluator.test_evaluate_experiment_show_and_save to allow automated testing.")
 
     def test_evaluate_experiment_show_but_no_save(self):
         if not show_no_plots_for_automated_tests:
@@ -104,8 +103,8 @@ class TestReplicateEvaluator(unittest.TestCase):
 
             self.assertFalse(os.path.exists(target_file))
         else:
-            print("Ignoring TestSparsityAccuracyOnSingleReplicateEvaluator.test_evaluate_experiment_show_but_no_save "
-                  "to allow automated testing.")
+            print("Ignoring TestReplicateEvaluator.test_evaluate_experiment_show_but_no_save to allow automated "
+                  "testing.")
 
     def test_evaluate_experiment_no_show_but_save(self):
         valid_num_epochs = 2
@@ -262,6 +261,9 @@ class TestSparsityAccuracyOnSingleReplicateEvaluator(unittest.TestCase):
                 path_to_replicate, valid_num_epochs)
 
             sparsity_accuracy_single_replicate_evaluator.evaluate(True, False)
+        else:
+            print("Ignoring TestSparsityAccuracyOnSingleReplicateEvaluator.test_evaluate_experiment to allow automated "
+                  "testing.")
 
 
 class TestSparsityNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase):
@@ -347,6 +349,9 @@ class TestSparsityNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
                     path_to_replicate, valid_num_epochs)
 
             sparsity_np_single_replicate_evaluator.evaluate(True, False)
+        else:
+            print("Ignoring TestSparsityNeuralPersistenceOnSingleReplicateEvaluator.test_evaluate_experiment to allow "
+                  "automated testing.")
 
 
 def get_neural_persistences_for_lottery_simplified():
@@ -447,6 +452,9 @@ class TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
                     path_to_replicate, valid_num_epochs)
 
             accuracy_np_single_replicate_evaluator.evaluate(True, False)
+        else:
+            print("Ignoring TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator.test_evaluate_experiment to allow "
+                  "automated testing.")
 
 
 class TestExperimentEvaluator(unittest.TestCase):
@@ -575,6 +583,9 @@ class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
             evaluator = experiment.SparsityAccuracyExperimentEvaluator(valid_experiment_path, valid_num_epochs)
 
             evaluator.evaluate(True, False)
+        else:
+            print("Ignoring TestSparsityAccuracyExperimentEvaluator.test_evaluate_experiment to allow automated "
+                  "testing.")
 
 
 class TestLoadingSparsitiesForExperiment(unittest.TestCase):
@@ -702,19 +713,21 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
     def setup_mock_np_with_nans():
         # these are the neural persistences of get_neural_persistences_for_lottery_simplified() with nans for the
         # non-normalized neural persistences
-        neural_persistences_w_nan = [{'fc_layers.0.weight': {'total_persistence': np.nan,
-                                                             'total_persistence_normalized': 0.4472135954999579},
-                                      'fc.weight': {'total_persistence': np.nan,
-                                                    'total_persistence_normalized': 0.5773502691896258},
-                                      'global': {'accumulated_total_persistence': np.nan,
-                                                 'accumulated_total_persistence_normalized': 0.5122819323447919}},
-                                     {'fc_layers.0.weight': {'total_persistence': np.nan,
-                                                             'total_persistence_normalized': 0.6324555320336759},
-                                      'fc.weight': {'total_persistence': np.nan,
-                                                    'total_persistence_normalized': 0.8164965809277261},
-                                      'global': {'accumulated_total_persistence': np.nan,
-                                                 'accumulated_total_persistence_normalized': 0.724476056480701}},
-                                     ]
+        neural_persistences_w_nan = \
+            [collections.defaultdict(dict, {'fc_layers.0.weight': {'total_persistence': np.nan,
+                                                                   'total_persistence_normalized': 0.4472135954999579},
+                                            'fc.weight': {'total_persistence': np.nan,
+                                                          'total_persistence_normalized': 0.5773502691896258},
+                                            'global': {'accumulated_total_persistence': np.nan,
+                                                       'accumulated_total_persistence_normalized': 0.5122819323447919}}
+                                     ),
+             collections.defaultdict(dict, {'fc_layers.0.weight': {'total_persistence': np.nan,
+                                                                   'total_persistence_normalized': 0.6324555320336759},
+                                            'fc.weight': {'total_persistence': np.nan,
+                                                          'total_persistence_normalized': 0.8164965809277261},
+                                            'global': {'accumulated_total_persistence': np.nan,
+                                                       'accumulated_total_persistence_normalized': 0.724476056480701}})
+             ]
         return [neural_persistences_w_nan, neural_persistences_w_nan]
 
     def test_reformat_neural_persistences(self):
@@ -800,60 +813,26 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         for key in expected_means.keys():
             np.testing.assert_array_equal(expected_means[key], actual_means[key])
 
+    def test_get_plotter(self):
+        valid_epochs = 2
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(valid_experiment_path, valid_epochs)
 
+        plotter = evaluator.get_plotter()
 
-class TestSparsityNeuralPersistenceExperiment(unittest.TestCase):
-    def test_sparsity_np(self):
-        expected_sparsities = [1.0, 212959.0/266200.0]
+        self.assertTrue(isinstance(plotter, plotters.SparsityNeuralPersistenceExperimentPlotter))
 
-        expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
-                                                                                  [-1., -1., -1., -1.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[-1., -1.], [-1., -1.]]).numpy())])
-        expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
-                                                                                  [0., -1., -1., 0.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
-        per_layer_calc = PerLayerCalculation()
+    def test_evaluate_experiment(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+            evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(valid_experiment_path, valid_num_epochs)
 
-        expected_np_lvl_0 = per_layer_calc(expected_dict_level_0)
-        expected_np_lvl_1 = per_layer_calc(expected_dict_level_1)
-        expected_mean_np_lvl_0 = {layer_key: expected_np_lvl_0[layer_key][persistence_key] for layer_key in
-                                  expected_np_lvl_0.keys()
-                                  for persistence_key in expected_np_lvl_0[layer_key].keys()
-                                  if "normalized" in persistence_key}
-        expected_mean_np_lvl_1 = {layer_key: expected_np_lvl_1[layer_key][persistence_key] for layer_key in
-                                  expected_np_lvl_1.keys()
-                                  for persistence_key in expected_np_lvl_1[layer_key].keys()
-                                  if "normalized" in persistence_key}
-
-        expected_std_np_lvl_0 = {key: 0.0 for key in expected_np_lvl_0.keys()}
-        expected_std_np_lvl_1 = {key: 0.0 for key in expected_np_lvl_1.keys()}
-
-        sparsities, mean_nps, std_nps = experiment.sparsity_neural_persistence_plot_experiment(
-            "./resources/test_plots/lottery_simplified_experiment/", 2, show_plot=show_plot_off_for_fast_tests, save_plot=False)
-
-        self.assertEqual(expected_sparsities, sparsities)
-        self.assertEqual(expected_mean_np_lvl_0, mean_nps[0])
-        self.assertEqual(expected_mean_np_lvl_1, mean_nps[1])
-        self.assertEqual(expected_std_np_lvl_0, std_nps[0])
-        self.assertEqual(expected_std_np_lvl_1, std_nps[1])
-
-    def test_equal_sparsity_lengths(self):
-        with self.assertRaises(AssertionError):
-            experiment.sparsity_neural_persistence_plot_experiment(
-                "./resources/test_get_paths_from_experiment/lottery_simplified_experiment_unequal_sparsities", 2,
-                show_plot=show_plot_off_for_fast_tests, save_plot=False)
-
-    def test_save_plot(self):
-        if os.path.isfile("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png"):
-            os.remove("./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png")
-
-        assert not os.path.exists(
-            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png")
-
-        _, _, _ = experiment.sparsity_neural_persistence_plot_experiment(
-            "./resources/test_plots/lottery_simplified_experiment/", 2, show_plot=show_plot_off_for_fast_tests, save_plot=True)
-        self.assertTrue(os.path.isfile(
-            "./resources/test_plots/lottery_simplified_experiment/plots/sparsity_neural_persistence_experiment.png"))
+            evaluator.evaluate(True, False)
+        else:
+            print("Ignoring TestSparsityNeuralPersistenceExperimentEvaluator.test_evaluate_experiment to allow "
+                  "automated testing.")
 
 
 class TestAccuracyNPPlotExperiment(unittest.TestCase):
