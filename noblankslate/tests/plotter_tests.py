@@ -80,8 +80,7 @@ class TestPlotterBaseClass(unittest.TestCase):
 
             plotter.show_plot()
         else:
-            print("Ignoring TestSparsityAccuracyReplicatePlotter.test_show_plot_shows_when_axis_not_none to allow "
-                  "automated testing.")
+            print("Ignoring TestPlotterBaseClass.test_show_plot_shows_when_axis_not_none to allow automated testing.")
 
     def test_show_plot_raises_when_axis_none(self):
         plotter = ConcretePlotter()
@@ -191,6 +190,9 @@ class TestSparsityAccuracyReplicatePlotter(unittest.TestCase):
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
+        else:
+            print("Ignoring TestSparsityAccuracyReplicatePlotter.test_show_plot_shows_when_axis_not_none to allow "
+                  "automated testing.")
 
 
 class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
@@ -250,6 +252,9 @@ class TestSparsityNeuralPersistenceReplicatePlotter(unittest.TestCase):
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
+        else:
+            print("Ignoring TestSparsityNeuralPersistenceReplicatePlotter.test_show_plot_shows_when_axis_not_none to "
+                  "allow automated testing.")
 
 
 class TestAccuracyNeuralPersistenceReplicatePlotter(unittest.TestCase):
@@ -300,6 +305,9 @@ class TestAccuracyNeuralPersistenceReplicatePlotter(unittest.TestCase):
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
+        else:
+            print("Ignoring TestAccuracyNeuralPersistenceReplicatePlotter.test_show_plot_shows_when_axis_not_none to "
+                  "allow automated testing.")
 
 
 class TestExperimentPlotterBaseClass(unittest.TestCase):
@@ -420,6 +428,9 @@ class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
+        else:
+            print("Ignoring TestSparsityAccuracyExperimentPlotter.test_show_plot_shows_when_axis_not_none to allow "
+                  "automated testing.")
 
 
 class TestSparsityNeuralPersistenceExperimentPlotter(unittest.TestCase):
@@ -504,6 +515,9 @@ class TestSparsityNeuralPersistenceExperimentPlotter(unittest.TestCase):
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
+        else:
+            print("Ignoring TestSparsityNeuralPersistenceExperimentPlotter.test_show_plot_shows_when_axis_not_none to "
+                  "allow automated testing.")
 
 
 class TestAccuracyNeuralPersistenceExperimentPlotter(unittest.TestCase):
@@ -579,6 +593,9 @@ class TestAccuracyNeuralPersistenceExperimentPlotter(unittest.TestCase):
             plotter.make_plot(x_data, y_data)
 
             plotter.show_plot()
+        else:
+            print("Ignoring TestAccuracyNeuralPersistenceExperimentPlotter.test_show_plot_shows_when_axis_not_none to "
+                  "allow automated testing.")
 
 
 if __name__ == '__main__':
