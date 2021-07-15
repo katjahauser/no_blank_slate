@@ -15,6 +15,7 @@ import src.utils as utils
 # todo add replicates to replicate plotting function save paths
 # todo exchange dicts for ordered dicts where necessary
 # todo make sure defaultdicts behave (no reliance on key errors that they don't throw)
+# todo remove doubling in code (loading accuracy etc) and move to utils
 
 
 class ReplicateEvaluator(metaclass=abc.ABCMeta):
@@ -247,30 +248,50 @@ def assert_sparsities_equal(expected_sparsities, actual_sparsities, key_expected
                                              expected_sparsities, actual_sparsities)
 
 
-class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
-    def load_x_data(self, paths):  # loads sparsities
-        self.x_data = load_sparsities_for_experiment(paths)
+class NeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        return (hasattr(subclass, 'load_x_data') and
+                callable(subclass.load_x_data) and
+                hasattr(subclass, 'load_y_data') and
+                callable(subclass.load_y_data) and
+                hasattr(subclass, 'prepare_x_data_for_plotting') and
+                callable(subclass.prepare_x_data_for_plotting) and
+                hasattr(subclass, 'prepare_neural_persistences_for_plotting') and
+                callable(subclass.prepare_neural_persistences_for_plotting) and
+                hasattr(subclass, 'match_layer_names') and
+                callable(subclass.match_layer_names) and
+                hasattr(subclass, 'get_plotter') and
+                callable(subclass.get_plotter))
 
-    def load_y_data(self, paths):  # loads neural persistences
-        # format:
-        # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
-        #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
-        #  ...]
-        # where each replicateX.sparsity_levelY is a dict containing the neural persistences
-        neural_persistences = []
-        for replicate in paths.keys():
-            np_for_replicate = []
-            for end_model_path, mask_path in paths[replicate]["model_end"]:
-                if mask_path is None:
-                    np_for_replicate.append(get_neural_persistence_for_unmasked_weights(end_model_path))
-                else:
-                    np_for_replicate.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
-            neural_persistences.append(np_for_replicate)
-        self.y_data = neural_persistences
+    def __init__(self, experiment_root_path, eps):
+        super().__init__(experiment_root_path, eps)
+
+    @abc.abstractmethod
+    def load_x_data(self, paths):
+        raise NotImplementedError("Trying to call load_x_data from abstract base class "
+                                  "NeuralPersistenceExperimentEvaluator.")
+
+    @abc.abstractmethod
+    def load_y_data(self, paths):
+        raise NotImplementedError("Trying to call load_y_data from abstract base class "
+                                  "NeuralPersistenceExperimentEvaluator.")
 
     def prepare_data_for_plotting(self):
-        # nothing to do for x_data
-        # transform y_data from
+        layer_names = self.get_layer_names()
+        self.reformat_neural_persistences()
+        self.prepare_x_data_for_plotting()
+        self.prepare_neural_persistences_for_plotting()
+        self.match_layer_names(layer_names)
+
+    def get_layer_names(self):
+        if type(self.y_data[0][0]) is not collections.defaultdict:
+            raise TypeError("y_data has the wrong type ({}). You probably reformated the data before getting the layer "
+                            "names.".format(type(self.y_data[0][0])))
+        return self.y_data[0][0].keys()
+
+    def reformat_neural_persistences(self):
+        # transform neural persistences (y_data) from
         # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
         #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
         #  ...]
@@ -282,22 +303,6 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
         #  layer2: [std_dev_np_sparsity_lvl0, std_dev_np_sparsity_lvl1, ...],
         #  ...}
         # )
-
-        layer_names = self.get_layer_names()
-        self.reformat_neural_persistences()
-        means = self.compute_means()
-        std_devs = self.compute_std_deviations()
-        means = self.match_layer_names_to_statistic(layer_names, means)
-        std_devs = self.match_layer_names_to_statistic(layer_names, std_devs)
-        self.y_data = (means, std_devs)
-
-    def get_layer_names(self):
-        if type(self.y_data[0][0]) is not collections.defaultdict:
-            raise TypeError("y_data has the wrong type ({}). You probably reformated the data before getting the layer "
-                            "names.".format(type(self.y_data[0][0])))
-        return self.y_data[0][0].keys()
-
-    def reformat_neural_persistences(self):
         reformated_np = self.create_tensor_for_reformating()
         for replicate in range(len(self.y_data)):
             for sparsity_level in range(len(self.y_data[0])):
@@ -319,11 +324,67 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
             if "normalized" in key:
                 return value
 
+    @abc.abstractmethod
+    def prepare_x_data_for_plotting(self):
+        raise NotImplementedError("Trying to call prepare_x_data from abstract base class "
+                                  "NeuralPersistenceExperimentEvaluator.")
+
+    @abc.abstractmethod
+    def prepare_neural_persistences_for_plotting(self):
+        raise NotImplementedError("Trying to call prepare_neural_persistences from abstract base class "
+                                  "NeuralPersistenceExperimentEvaluator.")
+
+    @abc.abstractmethod
+    def match_layer_names(self, layer_names):
+        raise NotImplementedError("Trying to call match_layer_names from abstract base class "
+                                  "NeuralPersistenceExperimentEvaluator.")
+
+    @abc.abstractmethod
+    def get_plotter(self):
+        raise NotImplementedError("Trying to call get_plotter from abstract base class "
+                                  "NeuralPersistenceExperimentEvaluator.")
+
+
+class SparsityNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEvaluator):
+    def load_x_data(self, paths):  # loads sparsities
+        self.x_data = load_sparsities_for_experiment(paths)
+
+    def load_y_data(self, paths):  # loads neural persistences
+        # format:
+        # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
+        #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
+        #  ...]
+        # where each replicateX.sparsity_levelY is a dict containing the neural persistences
+        neural_persistences = []
+        for replicate in paths.keys():
+            np_for_replicate = []
+            for end_model_path, mask_path in paths[replicate]["model_end"]:
+                if mask_path is None:
+                    np_for_replicate.append(get_neural_persistence_for_unmasked_weights(end_model_path))
+                else:
+                    np_for_replicate.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
+            neural_persistences.append(np_for_replicate)
+        self.y_data = neural_persistences
+
+    def prepare_x_data_for_plotting(self):
+        # nothing to do for sparsities
+        pass
+
+    def prepare_neural_persistences_for_plotting(self):
+        self.y_data = (self.compute_means(), self.compute_std_deviations())
+
     def compute_means(self):
         return np.mean(self.y_data, axis=2)
 
     def compute_std_deviations(self):
         return np.std(self.y_data, axis=2)
+
+    def match_layer_names(self, layer_names):
+        means = self.y_data[0]
+        std_devs = self.y_data[1]
+        matched_means = self.match_layer_names_to_statistic(layer_names, means)
+        matched_std_devs = self.match_layer_names_to_statistic(layer_names, std_devs)
+        self.y_data = (matched_means, matched_std_devs)
 
     @staticmethod
     def match_layer_names_to_statistic(layer_names, statistic):
@@ -334,6 +395,39 @@ class SparsityNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
 
     def get_plotter(self):
         return plotters.SparsityNeuralPersistenceExperimentPlotter(self.num_replicates)
+
+
+class AccuracyNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
+    def load_x_data(self, paths):  # load accuracies
+        for i, replicate in enumerate(paths.keys()):
+            if i == 0:
+                accuracies = np.ones((len(paths.keys()), len(paths[replicate]["accuracy"]))) * (-1)
+            accuracies[i] = [utils.load_accuracy(acc) for acc in paths[replicate]["accuracy"]]
+
+        self.x_data = accuracies
+
+    def load_y_data(self, paths):  # load neural persistences
+        # format:
+        # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
+        #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
+        #  ...]
+        # where each replicateX.sparsity_levelY is a dict containing the neural persistences
+        neural_persistences = []
+        for replicate in paths.keys():
+            np_for_replicate = []
+            for end_model_path, mask_path in paths[replicate]["model_end"]:
+                if mask_path is None:
+                    np_for_replicate.append(get_neural_persistence_for_unmasked_weights(end_model_path))
+                else:
+                    np_for_replicate.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
+            neural_persistences.append(np_for_replicate)
+        self.y_data = neural_persistences
+
+    def prepare_data_for_plotting(self):
+        pass
+
+    def get_plotter(self):
+        pass
 
 
 def accuracy_neural_persistence_plot_experiment(experiment_root_path, eps, show_plot=True, save_plot=False):
