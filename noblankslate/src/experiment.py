@@ -1,9 +1,6 @@
 import abc
 import collections
-import os.path
-from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from deps.neural_persistence.src.tda import PerLayerCalculation
@@ -431,69 +428,14 @@ class AccuracyNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEv
         self.y_data = matched_neural_persistences
 
     def get_plotter(self):
-        pass
-
-
-def accuracy_neural_persistence_plot_experiment(experiment_root_path, eps, show_plot=True, save_plot=False):
-    """
-    Creates accuracy-neural persistence plots for experiments.
-
-    todo as with the same function for one replicate: maybe add option to plot global in separate plot
-
-    :param experiment_root_path: str, root path of an openLTH lottery-type experiment
-    :param eps: training epochs
-    :param show_plot: bool, default=True
-    :param save_plot: bool, default=False, saves plot to
-    experiment_root_path/plots/accuracy_neural_persistence_experiment.png
-    :return: two lists, first list of accuracies, second list of dicts as put out by tda.PerLayerCalc. list1[i]
-    corresponds to list2[i] for convenient use with matplotlib.pyplot.scatter.
-    """
-    paths = utils.get_paths_from_experiment(experiment_root_path, "lottery", eps)
-    accuracies = []
-    neural_pers_calc = PerLayerCalculation()
-    neural_persistences = []
-
-    for replicate in paths.keys():
-        for accuracy_path in paths[replicate]["accuracy"]:
-            accuracies.append(utils.load_accuracy(accuracy_path))
-        for end_model_path in paths[replicate]["model_end"]:
-            if end_model_path[1] is None:
-                neural_persistences.append(neural_pers_calc(utils.load_unmasked_weights(end_model_path[0])))
-            else:
-                neural_persistences.append(neural_pers_calc(utils.load_masked_weights(end_model_path[0],
-                                                                                      end_model_path[1])))
-
-    neural_pers_for_plotting = utils.prepare_neural_persistence_for_plotting(neural_persistences)
-
-    _, p = plt.subplots(1, 1)
-
-    # todo this needs to be refactored. Add tests and asserts (for both markers <= num_replicate and colors <= num_layers+1) then, too.
-    markers = "ov2P*x+Ds<3p"
-    colors = "rgbcmy"
-    for i, (key, np_plot) in enumerate(neural_pers_for_plotting.items()):
-        for j, n_pers in enumerate(np_plot):
-            p.scatter(accuracies[j], n_pers, marker=markers[int(j/len(paths.keys()))], color=colors[i])
-    colors_for_legend = [plt.Circle((0, 0), color=colors[i]) for i in range(len(neural_pers_for_plotting.keys()))]
-    p.legend(colors_for_legend, neural_pers_for_plotting.keys())
-    plt.title("Accuracy-Neural Persistence")
-    plt.xlabel("Accuracy")
-    plt.ylabel("Neural Persistence")
-
-    if save_plot:
-        if experiment_root_path[-1] != "/":
-            experiment_root_path += "/"
-        plot_dir = experiment_root_path + "/plots/"
-        if not os.path.isdir(plot_dir):
-            os.mkdir(plot_dir)
-        plt.savefig(plot_dir + "/accuracy_neural_persistence_experiment.png")
-    # since plt.show() clears the current figure, saving first and then showing avoids running into problems.
-    if show_plot:
-        plt.show()
-
-    return accuracies, neural_persistences
+        return plotters.AccuracyNeuralPersistenceExperimentPlotter(self.num_replicates)
 
 
 if __name__ == "__main__":
-    sparsity_accuracy_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, show_plot=False, save_plot=True)
-    sparsity_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, show_plot=False, save_plot=True)
-    accuracy_neural_persistence_plot_experiment("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20, show_plot=False, save_plot=True)
+
+    SparsityAccuracyExperimentEvaluator("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20)\
+        .evaluate(show_plot=False, save_plot=True)
+    SparsityNeuralPersistenceExperimentEvaluator("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20)\
+        .evaluate(show_plot=False, save_plot=True)
+    AccuracyNeuralPersistenceExperimentEvaluator("../experiments/lottery_37adeb06fd584c18ebbf48beec5747d3/", 20)\
+        .evaluate(show_plot=False, save_plot=True)

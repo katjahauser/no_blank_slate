@@ -14,9 +14,6 @@ import src.plotters as plotters
 import src.utils as utils
 import tests.utils_tests as utils_tests
 
-
-show_plot_off_for_fast_tests = True
-
 show_no_plots_for_automated_tests = True
 
 
@@ -1021,64 +1018,26 @@ class TestAccuracyNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         for key in expected_np.keys():
             np.testing.assert_array_equal(expected_np[key], evaluator.y_data[key])
 
-    # def test_get_plotter(self):   # todo
-    #     self.assertTrue(False)
-    #     valid_epochs = 2
-    #     valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
-    #     evaluator = experiment.SparsityAccuracyExperimentEvaluator(valid_experiment_path, valid_epochs)
-    #
-    #     plotter = evaluator.get_plotter()
-    #
-    #     self.assertTrue(isinstance(plotter, plotters.SparsityAccuracyExperimentPlotter))
-    #
-    # def test_evaluate_experiment(self):  # todo
-    #     self.assertTrue(False)
-    #     # sanity check
-    #     if not show_no_plots_for_automated_tests:
-    #         valid_num_epochs = 2
-    #         valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
-    #         evaluator = experiment.SparsityAccuracyExperimentEvaluator(valid_experiment_path, valid_num_epochs)
-    #
-    #         evaluator.evaluate(True, False)
-    #     else:
-    #         print("Ignoring TestSparsityAccuracyExperimentEvaluator.test_evaluate_experiment to allow automated "
-    #               "testing.")
+    def test_get_plotter(self):
+        valid_epochs = 2
+        valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(valid_experiment_path, valid_epochs)
 
+        plotter = evaluator.get_plotter()
 
-class TestAccuracyNPPlotExperiment(unittest.TestCase):
-    def test_accuracy_NP_experiment(self):
-        expected_accuracies = [0.9644, 0.9678, 0.9544, 0.9878]
+        self.assertTrue(isinstance(plotter, plotters.AccuracyNeuralPersistenceExperimentPlotter))
 
-        expected_dict_level_0 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., -1., -1., -1.],
-                                                                                  [-1., -1., -1., -1.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[-1., -1.], [-1., -1.]]).numpy())])
-        expected_dict_level_1 = OrderedDict([('fc_layers.0.weight', torch.tensor([[-1., 0., -1., 0.],
-                                                                                  [0., -1., -1., 0.]]).numpy()),
-                                             ('fc.weight', torch.tensor([[0., 0.], [-1., -1.]]).numpy())])
-        per_layer_calc = PerLayerCalculation()
+    def test_evaluate_experiment(self):
+        # sanity check
+        if not show_no_plots_for_automated_tests:
+            valid_num_epochs = 2
+            valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+            evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(valid_experiment_path, valid_num_epochs)
 
-        expected_np_lvl_0 = per_layer_calc(expected_dict_level_0)
-        expected_np_lvl_1 = per_layer_calc(expected_dict_level_1)
-        expected_neural_persistences = [expected_np_lvl_0, expected_np_lvl_1, expected_np_lvl_0, expected_np_lvl_1]
-
-        accuracies, neural_persistences = experiment.accuracy_neural_persistence_plot_experiment(
-            "./resources/test_plots/lottery_simplified_experiment/", 2, show_plot=show_plot_off_for_fast_tests, save_plot=False)
-
-        self.assertEqual(expected_accuracies, accuracies)
-        for i in range(len(expected_neural_persistences)):
-            self.assertDictEqual(expected_neural_persistences[i], neural_persistences[i])
-
-    def test_accuracy_NP_plot(self):
-        if os.path.isfile("./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png"):
-            os.remove("./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png")
-
-        assert not os.path.exists(
-            "./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png")
-
-        _, _ = experiment.accuracy_neural_persistence_plot_experiment(
-            "./resources/test_plots/lottery_simplified_experiment/", 2, show_plot=show_plot_off_for_fast_tests, save_plot=True)
-        self.assertTrue(os.path.isfile(
-            "./resources/test_plots/lottery_simplified_experiment/plots/accuracy_neural_persistence_experiment.png"))
+            evaluator.evaluate(True, False)
+        else:
+            print("Ignoring TestSparsityAccuracyExperimentEvaluator.test_evaluate_experiment to allow automated "
+                  "testing.")
 
 
 if __name__ == '__main__':
