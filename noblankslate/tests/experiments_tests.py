@@ -642,12 +642,13 @@ class TestNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         valid_epochs = 2
         evaluator = ConcreteNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
         expected_x_data = [2, 3, 4]
-        expected_y_data = np.asarray([[[0.4472135954999579, 0.4472135954999579],   # layer 1, sparsity level 0, replicates 1 & 2
-                                       [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
-                                      [[0.5773502691896258, 0.5773502691896258],   # layer 2, sparsity level 0, "
-                                       [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
-                                      [[0.5122819323447919, 0.5122819323447919],   # global, sparsity level 0, "
-                                       [0.724476056480701, 0.724476056480701]]])   # global, sparsity level 1, "
+        expected_y_data = np.asarray(
+            [[[0.4472135954999579, 0.4472135954999579],  # layer 1, sparsity level 0, replicates 1 & 2
+              [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
+             [[0.5773502691896258, 0.5773502691896258],  # layer 2, sparsity level 0, "
+              [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
+             [[0.5122819323447919, 0.5122819323447919],  # global, sparsity level 0, "
+              [0.724476056480701, 0.724476056480701]]])   # global, sparsity level 1, "
 
         evaluator.y_data = setup_mock_np_with_nans()
         evaluator.x_data = expected_x_data
@@ -680,12 +681,13 @@ class TestNeuralPersistenceExperimentEvaluator(unittest.TestCase):
             evaluator.get_layer_names()
 
     def test_reformat_neural_persistences(self):
-        expected_tensor = np.asarray([[[0.4472135954999579, 0.4472135954999579],   # layer 1, sparsity level 0, replicates 1 & 2
-                                       [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
-                                      [[0.5773502691896258, 0.5773502691896258],   # layer 2, sparsity level 0, "
-                                       [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
-                                      [[0.5122819323447919, 0.5122819323447919],   # global, sparsity level 0, "
-                                       [0.724476056480701, 0.724476056480701]]])   # global, sparsity level 1, "
+        expected_tensor = np.asarray(
+            [[[0.4472135954999579, 0.4472135954999579],  # layer 1, sparsity level 0, replicates 1 & 2
+              [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
+             [[0.5773502691896258, 0.5773502691896258],  # layer 2, sparsity level 0, "
+              [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
+             [[0.5122819323447919, 0.5122819323447919],  # global, sparsity level 0, "
+              [0.724476056480701, 0.724476056480701]]])   # global, sparsity level 1, "
         experiment_path = "./resources/test_plots/lottery_simplified_experiment"
         valid_epochs = 2
         evaluator = ConcreteNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
@@ -935,7 +937,9 @@ class TestAccuracyNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         valid_experiment_path = "./resources/test_plots/lottery_simplified_experiment"
         evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(valid_experiment_path, valid_num_epochs)
 
-        self.assertTrue(isinstance(evaluator, experiment.ExperimentEvaluator))
+        self.assertTrue(isinstance(evaluator, experiment.NeuralPersistenceExperimentEvaluator))
+        self.assertTrue(issubclass(experiment.AccuracyNeuralPersistenceExperimentEvaluator,
+                                   experiment.NeuralPersistenceExperimentEvaluator))
         self.assertTrue(issubclass(experiment.AccuracyNeuralPersistenceExperimentEvaluator,
                                    experiment.ExperimentEvaluator))
         self.assertTrue(issubclass(experiment.AccuracyNeuralPersistenceExperimentEvaluator,
@@ -967,25 +971,56 @@ class TestAccuracyNeuralPersistenceExperimentEvaluator(unittest.TestCase):
             self.assertDictEqual(expected_y_data[i][0], evaluator.y_data[i][0])
             self.assertDictEqual(expected_y_data[i][1], evaluator.y_data[i][1])
 
-    # def test_prepare_data_for_plotting(self): # todo
-    #     self.assertTrue(False)
-    #     accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
-    #     expected_means = [0.9594, 0.9778]
-    #     expected_std_devs = [0.005, 0.01]
-    #     expected_sparsities = [1.0, 212959.0/266200.0]
-    #     experiment_path = "./resources/test_plots/lottery_simplified_experiment"
-    #     valid_epochs = 2
-    #     evaluator = experiment.SparsityAccuracyExperimentEvaluator(experiment_path, valid_epochs)
-    #     evaluator.load_data()
-    #     assert evaluator.x_data == expected_sparsities and (evaluator.y_data == accuracies).all()
-    #
-    #     evaluator.prepare_data_for_plotting()
-    #
-    #     self.assertEqual(expected_sparsities, evaluator.x_data)
-    #     self.assertEqual(expected_means, evaluator.y_data[0])
-    #     for i in range(len(expected_std_devs)):
-    #         self.assertAlmostEqual(expected_std_devs[i], evaluator.y_data[1][i])
-    #
+    def test_prepare_x_data_for_plotting(self):
+        expected_accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.load_data()
+
+        evaluator.prepare_x_data_for_plotting()
+
+        np.testing.assert_array_equal(expected_accuracies, evaluator.x_data)
+
+    def test_prepare_y_data_for_plotting(self):
+        expected_neural_persistences = np.asarray(
+            [[[0.4472135954999579, 0.4472135954999579],  # layer 1, sparsity level 0, replicates 1 & 2
+              [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
+             [[0.5773502691896258, 0.5773502691896258],  # layer 2, sparsity level 0, "
+              [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
+             [[0.5122819323447919, 0.5122819323447919],  # global, sparsity level 0, "
+              [0.724476056480701, 0.724476056480701]]])   # global, sparsity level 1, "
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = setup_mock_np_with_nans()
+        evaluator.reformat_neural_persistences()
+
+        evaluator.prepare_neural_persistences_for_plotting()
+
+        np.testing.assert_array_equal(expected_neural_persistences, evaluator.y_data)
+
+    def test_match_layer_names(self):
+        expected_np = {'fc_layers.0.weight': [[0.4472135954999579, 0.4472135954999579],  # layer 1, sparsity level 0, replicates 1 & 2
+                                              [0.6324555320336759, 0.6324555320336759]],  # layer 1, sparsity level 1, "
+                       'fc.weight': [[0.5773502691896258, 0.5773502691896258],  # layer 2, sparsity level 0, "
+                                     [0.8164965809277261, 0.8164965809277261]],  # layer 2, sparsity level 1, "
+                       'global': [[0.5122819323447919, 0.5122819323447919],  # global, sparsity level 0, "
+                                  [0.724476056480701, 0.724476056480701]]}  # global, sparsity level 1, "
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        evaluator.y_data = setup_mock_np_with_nans()
+        layer_names = evaluator.get_layer_names()
+        evaluator.reformat_neural_persistences()
+        evaluator.prepare_neural_persistences_for_plotting()
+
+        evaluator.match_layer_names(layer_names)
+
+        self.assertEqual(expected_np.keys(), evaluator.y_data.keys())
+        for key in expected_np.keys():
+            np.testing.assert_array_equal(expected_np[key], evaluator.y_data[key])
+
     # def test_get_plotter(self):   # todo
     #     self.assertTrue(False)
     #     valid_epochs = 2

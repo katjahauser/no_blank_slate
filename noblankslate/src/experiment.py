@@ -295,14 +295,9 @@ class NeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
         # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
         #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
         #  ...]
+        # (each replicateX.sparsity_levelY is a neural persistence dict from tda.PerLayerCalculation)
         # to
-        # ({layer1: [mean_np_sparsity_lvl0, mean_np_sparsity_lvl1, ...],
-        #   layer2: [mean_np_sparsity_lvl0, mean_np_sparsity_lvl1, ...],
-        #  ...},
-        # {layer1: [std_dev_np_sparsity_lvl0, std_dev_np_sparsity_lvl1, ...],
-        #  layer2: [std_dev_np_sparsity_lvl0, std_dev_np_sparsity_lvl1, ...],
-        #  ...}
-        # )
+        # np.array(shape=(layers, sparsity_levels, replicates))
         reformated_np = self.create_tensor_for_reformating()
         for replicate in range(len(self.y_data)):
             for sparsity_level in range(len(self.y_data[0])):
@@ -397,7 +392,7 @@ class SparsityNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEv
         return plotters.SparsityNeuralPersistenceExperimentPlotter(self.num_replicates)
 
 
-class AccuracyNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
+class AccuracyNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEvaluator):
     def load_x_data(self, paths):  # load accuracies
         for i, replicate in enumerate(paths.keys()):
             if i == 0:
@@ -423,8 +418,17 @@ class AccuracyNeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
             neural_persistences.append(np_for_replicate)
         self.y_data = neural_persistences
 
-    def prepare_data_for_plotting(self):
-        pass
+    def prepare_x_data_for_plotting(self):
+        pass  # nothing to do for x_data (accuracies)
+
+    def prepare_neural_persistences_for_plotting(self):
+        pass  # nothing to do for neural persistences
+
+    def match_layer_names(self, layer_names):
+        matched_neural_persistences = {}
+        for i, key in enumerate(layer_names):
+            matched_neural_persistences.update({key: self.y_data[i, :, :]})
+        self.y_data = matched_neural_persistences
 
     def get_plotter(self):
         pass
