@@ -178,3 +178,17 @@ class SparsityNeuralPersistenceExperimentPlotter(ExperimentPlotterBaseClass):
             axis.errorbar(x_values, means[key], std_devs[key], label=key)
         axis.invert_xaxis()
         plt.legend()
+
+
+class AccuracyNeuralPersistenceExperimentPlotter(ExperimentPlotterBaseClass):
+    # todo an verschiedene plotting modi anpassen (ein layer für alle sparsities, alle sparsities für einen layer
+
+    title = "Accuracy-Neural Persistence Experiment"
+    x_label = "Accuracy"
+    y_label = "Neural Persistence"
+    save_file_name = "accuracy_neural_persistence_experiment_plot.png"
+
+    def plot_data(self, axis, x_values, y_values):
+        for key in y_values.keys():
+            axis.scatter(x_values, y_values[key], label=key)
+        plt.legend()
