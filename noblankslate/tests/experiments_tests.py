@@ -52,6 +52,16 @@ class TestReplicateEvaluator(unittest.TestCase):
         self.assertEqual(expected_x_values, evaluator.x_data)
         self.assertEqual(expected_y_values, evaluator.y_data)
 
+    def test_get_paths(self):
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
+        expected_paths = utils_tests.generate_expected_paths_for_lottery_replicate(experiment_path, num_levels=2)
+        valid_epochs = 2
+        evaluator = ConcreteReplicateEvaluator(experiment_path, valid_epochs)
+
+        actual_paths = evaluator.get_paths()
+
+        self.assertDictEqual(expected_paths, actual_paths)
+
     def test_get_plotter(self):
         valid_num_epochs = 2
         evaluator = ConcreteReplicateEvaluator("dummy_path", valid_num_epochs)
@@ -130,9 +140,6 @@ class TestReplicateEvaluator(unittest.TestCase):
 
 class ConcreteReplicateEvaluator(experiment.ReplicateEvaluator):
     # mock implementation for testing non-abstract methods in ReplicateEvaluator.
-    def get_paths(self):
-        return ""
-
     def load_x_data(self, paths):
         self.x_data = [1., 2., 3.]
 
@@ -187,16 +194,6 @@ class TestSparsityAccuracyOnSingleReplicateEvaluator(unittest.TestCase):
         self.assertTrue(issubclass(experiment.SparsityAccuracyOnSingleReplicateEvaluator,
                                    experiment.ReplicateEvaluator))
         self.assertTrue(isinstance(sparsity_accuracy_single_replicate_evaluator, experiment.ReplicateEvaluator))
-
-    def test_get_paths(self):
-        experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
-        expected_paths = utils_tests.generate_expected_paths_for_lottery_replicate(experiment_path, num_levels=2)
-        valid_epochs = 2
-        evaluator = experiment.SparsityAccuracyOnSingleReplicateEvaluator(experiment_path, valid_epochs)
-
-        actual_paths = evaluator.get_paths()
-
-        self.assertDictEqual(expected_paths, actual_paths)
 
     def test_load_x_data(self):  # loads sparsities
         expected_sparsities = [1.0, 212959.0/266200.0]
@@ -273,16 +270,6 @@ class TestSparsityNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
                                    experiment.ReplicateEvaluator))
         self.assertTrue(isinstance(sparsity_neural_persistence_single_replicate_evaluator,
                                    experiment.ReplicateEvaluator))
-
-    def test_get_paths(self):
-        experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
-        expected_paths = utils_tests.generate_expected_paths_for_lottery_replicate(experiment_path, num_levels=2)
-        valid_epochs = 2
-        evaluator = experiment.SparsityNeuralPersistenceOnSingleReplicateEvaluator(experiment_path, valid_epochs)
-
-        actual_paths = evaluator.get_paths()
-
-        self.assertDictEqual(expected_paths, actual_paths)
 
     def test_load_x_data(self):  # loads sparsities
         expected_sparsities = [1.0, 212959.0/266200.0]
@@ -376,16 +363,6 @@ class TestAccuracyNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase)
                                    experiment.ReplicateEvaluator))
         self.assertTrue(isinstance(accuracy_neural_persistence_single_replicate_evaluator,
                                    experiment.ReplicateEvaluator))
-
-    def test_get_paths(self):
-        experiment_path = "./resources/test_plots/lottery_simplified_experiment/replicate_1"
-        expected_paths = utils_tests.generate_expected_paths_for_lottery_replicate(experiment_path, num_levels=2)
-        valid_epochs = 2
-        evaluator = experiment.AccuracyNeuralPersistenceOnSingleReplicateEvaluator(experiment_path, valid_epochs)
-
-        actual_paths = evaluator.get_paths()
-
-        self.assertDictEqual(expected_paths, actual_paths)
 
     def test_load_x_data(self):  # loads accuracies
         expected_accuracies = [0.9644, 0.9678]

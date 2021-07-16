@@ -16,9 +16,7 @@ import src.utils as utils
 class ReplicateEvaluator(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'get_paths') and
-                callable(subclass.get_paths) and
-                hasattr(subclass, 'load_x_data') and
+        return (hasattr(subclass, 'load_x_data') and
                 callable(subclass.load_x_data) and
                 hasattr(subclass, 'load_y_data') and
                 callable(subclass.load_y_data) and
@@ -56,9 +54,8 @@ class ReplicateEvaluator(metaclass=abc.ABCMeta):
         self.load_x_data(paths)
         self.load_y_data(paths)
 
-    @abc.abstractmethod
     def get_paths(self):
-        raise NotImplementedError("Trying to call get_paths from abstract base class SingleReplicateHandler.")
+        return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
 
     @abc.abstractmethod
     def load_x_data(self, paths):
@@ -82,9 +79,6 @@ class ReplicateEvaluator(metaclass=abc.ABCMeta):
 
 
 class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
-    def get_paths(self):
-        return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
-
     def load_x_data(self, paths):
         sparsities = []
         for report_path in paths["sparsity"]:
@@ -105,9 +99,6 @@ class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
 
 
 class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
-    def get_paths(self):
-        return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
-
     def load_x_data(self, paths):
         sparsities = []
         for report_path in paths["sparsity"]:
@@ -144,9 +135,6 @@ def get_neural_persistence_for_masked_weights(model_path, mask_path):
 
 
 class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
-    def get_paths(self):
-        return utils.get_paths_from_replicate(self.experiment_root_path, "lottery", self.epochs)
-
     def load_x_data(self, paths):
         accuracies = []
         for logger_path in paths["accuracy"]:
