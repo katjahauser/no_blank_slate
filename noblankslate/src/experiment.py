@@ -3,14 +3,11 @@ import collections
 
 import numpy as np
 
-from deps.neural_persistence.src.tda import PerLayerCalculation
 import src.plotters as plotters
 import src.utils as utils
 
-# plots:
-# todo * NP of mask vs NP of masked weights
-# todo add replicates to replicate plotting function save paths
-# todo remove doubling in code (loading accuracy etc) and move to utils
+# todo add plot of NP of mask vs NP of masked weights
+# todo add replicate number/name to replicate plotting function save paths
 
 
 class ReplicateEvaluator(metaclass=abc.ABCMeta):
@@ -80,10 +77,10 @@ class ReplicateEvaluator(metaclass=abc.ABCMeta):
 
 class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
     def load_x_data(self, paths):
-        self.x_data = load_sparsities_of_replicate(paths)
+        self.x_data = utils.load_sparsities_of_replicate(paths)
 
     def load_y_data(self, paths):
-        self.y_data = load_accuracies_of_replicate(paths)
+        self.y_data = utils.load_accuracies_of_replicate(paths)
 
     def prepare_data_for_plotting(self):
         pass  # nothing to do for this type of plot
@@ -92,26 +89,12 @@ class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
         return plotters.SparsityAccuracyReplicatePlotter()
 
 
-def load_sparsities_of_replicate(paths):
-        sparsities = []
-        for report_path in paths["sparsity"]:
-            sparsities.append(utils.load_sparsity(report_path))
-        return sparsities
-
-
-def load_accuracies_of_replicate(paths):
-    accuracies = []
-    for logger_path in paths["accuracy"]:
-        accuracies.append(utils.load_accuracy(logger_path))
-    return accuracies
-
-
 class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
     def load_x_data(self, paths):
-        self.x_data = load_sparsities_of_replicate(paths)
+        self.x_data = utils.load_sparsities_of_replicate(paths)
 
     def load_y_data(self, paths):
-        self.y_data = load_neural_persistences_of_replicate(paths)
+        self.y_data = utils.load_neural_persistences_of_replicate(paths)
 
     def prepare_data_for_plotting(self):
         # nothing to do for self.x_data
@@ -121,34 +104,12 @@ class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
         return plotters.SparsityNeuralPersistenceReplicatePlotter()
 
 
-def load_neural_persistences_of_replicate(paths):
-    neural_persistences = []
-
-    for end_model_path, mask_path in paths["model_end"]:
-        if mask_path is None:
-            neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
-        else:
-            neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
-
-    return neural_persistences
-
-
-def get_neural_persistence_for_unmasked_weights(model_path):
-    neural_pers_calc = PerLayerCalculation()
-    return neural_pers_calc(utils.load_unmasked_weights(model_path))
-
-
-def get_neural_persistence_for_masked_weights(model_path, mask_path):
-    neural_pers_calc = PerLayerCalculation()
-    return neural_pers_calc(utils.load_masked_weights(model_path, mask_path))
-
-
 class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
     def load_x_data(self, paths):
-        self.x_data = load_accuracies_of_replicate(paths)
+        self.x_data = utils.load_accuracies_of_replicate(paths)
 
     def load_y_data(self, paths):
-        self.y_data = load_neural_persistences_of_replicate(paths)
+        self.y_data = utils.load_neural_persistences_of_replicate(paths)
 
     def prepare_data_for_plotting(self):
         # nothing to do for self.x_data
@@ -187,15 +148,15 @@ class ExperimentEvaluator(ReplicateEvaluator):
     def get_plotter(self):
         raise NotImplementedError("Trying to call get_plotter from abstract base class SingleReplicateHandler.")
 
-    # todo add option to explicitely add replicate numbers
+    # todo add option to explicitely turn showing replicate numbers on/off
 
 
 class SparsityAccuracyExperimentEvaluator(ExperimentEvaluator):
     def load_x_data(self, paths):
-        self.x_data = load_sparsities_of_experiment(paths)
+        self.x_data = utils.load_sparsities_of_experiment(paths)
 
     def load_y_data(self, paths):
-        self.y_data = load_accuracies_of_experiment(paths)
+        self.y_data = utils.load_accuracies_of_experiment(paths)
 
     def prepare_data_for_plotting(self):
         # nothing to do for x_data
@@ -203,33 +164,6 @@ class SparsityAccuracyExperimentEvaluator(ExperimentEvaluator):
 
     def get_plotter(self):
         return plotters.SparsityAccuracyExperimentPlotter(self.num_replicates)
-
-
-def load_sparsities_of_experiment(paths):
-    for i, replicate in enumerate(paths.keys()):
-        if i == 0:
-            first_replicate = replicate
-            sparsities = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
-        else:
-            sparsities_to_be_checked = [utils.load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
-            assert_sparsities_equal(sparsities, sparsities_to_be_checked, first_replicate, replicate)
-    return sparsities
-
-
-def assert_sparsities_equal(expected_sparsities, actual_sparsities, key_expected_sparsities, key_actual_sparsities):
-    assert actual_sparsities == expected_sparsities, \
-        "The sparsities in replicate {} differ from the sparsities in replicate {}, although they should " \
-        "be equal. The sparsities in question are {} and {} respectively. Please make sure that you did " \
-        "not mix up any experiments.".format(key_expected_sparsities, key_actual_sparsities,
-                                             expected_sparsities, actual_sparsities)
-
-
-def load_accuracies_of_experiment(paths):
-    for i, replicate in enumerate(paths.keys()):
-        if i == 0:
-            accuracies = np.ones((len(paths.keys()), len(paths[replicate]["accuracy"]))) * (-1)
-        accuracies[i] = [utils.load_accuracy(acc) for acc in paths[replicate]["accuracy"]]
-    return accuracies
 
 
 class NeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
@@ -255,21 +189,7 @@ class NeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
                                   "NeuralPersistenceExperimentEvaluator.")
 
     def load_y_data(self, paths):
-        # format:
-        # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
-        #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
-        #  ...]
-        # where each replicateX.sparsity_levelY is a dict containing the neural persistences
-        neural_persistences = []
-        for replicate in paths.keys():
-            np_for_replicate = []
-            for end_model_path, mask_path in paths[replicate]["model_end"]:
-                if mask_path is None:
-                    np_for_replicate.append(get_neural_persistence_for_unmasked_weights(end_model_path))
-                else:
-                    np_for_replicate.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
-            neural_persistences.append(np_for_replicate)
-        self.y_data = neural_persistences
+        self.y_data = utils.load_neural_persistences_of_experiment(paths)
 
     def prepare_data_for_plotting(self):
         layer_names = self.get_layer_names()
@@ -339,7 +259,7 @@ class NeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
 
 class SparsityNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEvaluator):
     def load_x_data(self, paths):  # loads sparsities
-        self.x_data = load_sparsities_of_experiment(paths)
+        self.x_data = utils.load_sparsities_of_experiment(paths)
 
     def prepare_x_data_for_plotting(self):
         # nothing to do for sparsities
@@ -374,7 +294,7 @@ class SparsityNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEv
 
 class AccuracyNeuralPersistenceExperimentEvaluator(NeuralPersistenceExperimentEvaluator):
     def load_x_data(self, paths):
-        self.x_data = load_accuracies_of_experiment(paths)
+        self.x_data = utils.load_accuracies_of_experiment(paths)
 
     def prepare_x_data_for_plotting(self):
         pass  # nothing to do for x_data (accuracies)

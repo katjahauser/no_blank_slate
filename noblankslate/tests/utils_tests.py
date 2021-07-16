@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 
 import src.utils as utils
+import experiments_tests
 
 
 # simplified openLTH model
@@ -121,8 +122,8 @@ class TestGetPathsFromReplicate(unittest.TestCase):
             utils.get_paths_from_replicate(valid_train_path, "lottery", valid_eps)
         # todo replace path with actual lottery_branch folder once I get to that
         with(self.assertRaises(ValueError)):
-            utils.get_paths_from_replicate("resources/test_get_paths_from_replicate/temporary_lottery_branch_test", "lottery",
-                                           valid_eps)
+            utils.get_paths_from_replicate("resources/test_get_paths_from_replicate/temporary_lottery_branch_test",
+                                           "lottery", valid_eps)
 
         # test eps parameter
         with(self.assertRaises(FileNotFoundError)):
@@ -203,15 +204,19 @@ def generate_expected_paths_for_lottery_experiment(lottery_path, num_replicates,
                        "replicate_2": {"accuracy": [], "sparsity": [], "model_start": [], "model_end": []}}
     for replicate_num in range(1, num_replicates + 1):
         for level_num in range(num_levels):
-            expected_result["replicate_{}".format(str(replicate_num))]["accuracy"].append(paths[0].format(str(replicate_num), str(level_num)))
-            expected_result["replicate_{}".format(str(replicate_num))]["sparsity"].append(paths[1].format(str(replicate_num), str(level_num)))
-            expected_result["replicate_{}".format(str(replicate_num))]["model_start"].append(paths[2].format(str(replicate_num), str(level_num)))
+            expected_result["replicate_{}".format(str(replicate_num))]["accuracy"].append(
+                paths[0].format(str(replicate_num), str(level_num)))
+            expected_result["replicate_{}".format(str(replicate_num))]["sparsity"].append(
+                paths[1].format(str(replicate_num), str(level_num)))
+            expected_result["replicate_{}".format(str(replicate_num))]["model_start"].append(
+                paths[2].format(str(replicate_num), str(level_num)))
             if level_num == 0:
-                expected_result["replicate_{}".format(str(replicate_num))]["model_end"].append((paths[3].format(str(replicate_num), str(level_num)),
-                                                                                    None))
+                expected_result["replicate_{}".format(str(replicate_num))]["model_end"].append(
+                    (paths[3].format(str(replicate_num), str(level_num)), None))
             else:
                 expected_result["replicate_{}".format(str(replicate_num))]["model_end"].append(
-                    (paths[3].format(str(replicate_num), str(level_num)), paths[4].format(str(replicate_num), str(level_num))))
+                    (paths[3].format(str(replicate_num), str(level_num)), paths[4].format(str(replicate_num),
+                                                                                          str(level_num))))
     return expected_result
 
 
@@ -251,24 +256,108 @@ class TestLoadSparsity(unittest.TestCase):
 
         self.assertEqual(expected_sparsity, utils.load_sparsity("./resources/test_load_sparsity/sparsity_report.json"))
 
-    def test_wanky_sparsity(self):
+    def test_faulty_sparsity(self):
         with self.assertRaises(AssertionError):
             utils.load_sparsity("./resources/test_load_sparsity/sparsity_report_more_unpruned_then_there.json")
 
 
 class TestPrepareNeuralPersistencesForPlotting(unittest.TestCase):
     def test_prepare_np_for_plotting(self):
-        neural_pers = [{'fc_layers.0.weight': {'total_persistence': 1.0, 'total_persistence_normalized': 0.4472135954999579},
-                        'fc.weight': {'total_persistence': 1.0, 'total_persistence_normalized': 0.5773502691896258},
-                        'global': {'accumulated_total_persistence': 2.0, 'accumulated_total_persistence_normalized': 0.5122819323447919}},
-                       {'fc_layers.0.weight': {'total_persistence': 1.4142135623730951, 'total_persistence_normalized': 0.6324555320336759},
-                        'fc.weight': {'total_persistence': 1.4142135623730951, 'total_persistence_normalized': 0.8164965809277261},
-                        'global': {'accumulated_total_persistence': 2.8284271247461903, 'accumulated_total_persistence_normalized': 0.724476056480701}}]
+        neural_pers = [{'fc_layers.0.weight': {'total_persistence': 1.0,
+                                               'total_persistence_normalized': 0.4472135954999579},
+                        'fc.weight': {'total_persistence': 1.0,
+                                      'total_persistence_normalized': 0.5773502691896258},
+                        'global': {'accumulated_total_persistence': 2.0,
+                                   'accumulated_total_persistence_normalized': 0.5122819323447919}},
+                       {'fc_layers.0.weight': {'total_persistence': 1.4142135623730951,
+                                               'total_persistence_normalized': 0.6324555320336759},
+                        'fc.weight': {'total_persistence': 1.4142135623730951,
+                                      'total_persistence_normalized': 0.8164965809277261},
+                        'global': {'accumulated_total_persistence': 2.8284271247461903,
+                                   'accumulated_total_persistence_normalized': 0.724476056480701}}]
         expected_np = {'fc_layers.0.weight': [0.4472135954999579, 0.6324555320336759],
                        'fc.weight': [0.5773502691896258, 0.8164965809277261],
                        'global': [0.5122819323447919, 0.724476056480701]}
 
         self.assertDictEqual(expected_np, utils.prepare_neural_persistence_for_plotting(neural_pers))
+
+
+class TestLoadingFunctionsForReplicates(unittest.TestCase):
+    def test_load_sparsities_of_replicate(self):
+        expected_sparsities = [1.0, 212959.0/266200.0]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        paths = utils.get_paths_from_replicate(path_to_replicate, "lottery", valid_num_epochs)
+
+        actual_sparsities = utils.load_sparsities_of_replicate(paths)
+
+        self.assertEqual(expected_sparsities, actual_sparsities)
+
+    def test_load_accuracies_of_replicate(self):
+        expected_accuracies = [0.9644, 0.9678]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        paths = utils.get_paths_from_replicate(path_to_replicate, "lottery", valid_num_epochs)
+
+        actual_accuracies = utils.load_accuracies_of_replicate(paths)
+
+        self.assertEqual(expected_accuracies, actual_accuracies)
+
+    def test_load_neural_persistences_of_replicate(self):
+        expected_np_level_0, expected_np_level_1 = experiments_tests.get_neural_persistences_for_lottery_simplified()
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        paths = utils.get_paths_from_replicate(path_to_replicate, "lottery", valid_num_epochs)
+
+        actual_nps = utils.load_neural_persistences_of_replicate(paths)
+
+        self.assertDictEqual(expected_np_level_0, actual_nps[0])
+        self.assertDictEqual(expected_np_level_1, actual_nps[1])
+
+
+class TestLoadingFunctionsForExperiment(unittest.TestCase):
+    def test_load_sparsities_of_experiment(self):
+        expected_sparsities = [1.0, 212959.0/266200.0]
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
+
+        actual_sparsities = utils.load_sparsities_of_experiment(paths)
+
+        self.assertEqual(expected_sparsities, actual_sparsities)
+
+    def test_load_sparsities_on_unequal_sparsities_raises(self):
+        experiment_path = "./resources/test_get_paths_from_experiment/lottery_simplified_experiment_unequal_sparsities"
+        valid_epochs = 2
+        paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
+
+        with self.assertRaises(AssertionError):
+            utils.load_sparsities_of_experiment(paths)
+
+    def test_assert_sparsities_equal_raises_on_unequal_sparsities(self):
+        sparsities1 = [1., .2]
+        sparsities2 = [1., .1]
+
+        with self.assertRaises(AssertionError):
+            utils.assert_sparsities_equal(sparsities1, sparsities2, "key1", "key2")
+
+    def test_assert_sparsities_equal_does_not_raise_on_equal_sparsities(self):
+        sparsities1 = [1., .1]
+        sparsities2 = [1., .1]
+
+        should_be_none = utils.assert_sparsities_equal(sparsities1, sparsities2, "key1", "key2")
+
+        self.assertIsNone(should_be_none)
+
+    def test_load_accuracies_of_experiment(self):
+        expected_accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
+
+        actual_accuracies = utils.load_accuracies_of_experiment(paths)
+
+        np.testing.assert_array_equal(expected_accuracies, actual_accuracies)
 
 
 if __name__ == '__main__':

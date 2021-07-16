@@ -73,7 +73,6 @@ class PlotterBaseClass(metaclass=abc.ABCMeta):
         plt.close(self.figure)
 
 
-# todo add functionality to deal with several replicates (i.e. take custom names)
 class ReplicatePathHandler:
     @staticmethod
     def prepare_plot_dir(experiment_root):
@@ -181,7 +180,7 @@ class SparsityNeuralPersistenceExperimentPlotter(ExperimentPlotterBaseClass):
 
 
 class AccuracyNeuralPersistenceExperimentPlotter(ExperimentPlotterBaseClass):
-    # todo an verschiedene plotting modi anpassen (ein layer für alle sparsities, alle sparsities für einen layer
+    # todo optionally extend to allow different modi of plotting, e.g. all sparsity levels for one layer and vice versa
 
     title = "Accuracy-Neural Persistence Experiment"
     x_label = "Accuracy"

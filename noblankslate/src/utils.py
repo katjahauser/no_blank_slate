@@ -2,7 +2,10 @@ from collections import OrderedDict
 import os.path
 
 import json
+import numpy as np
 import torch
+
+from deps.neural_persistence.src.tda import PerLayerCalculation
 
 
 def prepare_ordered_dict_from_model(model):
@@ -168,7 +171,7 @@ def get_paths_from_experiment(base_path, experiment_type, eps):
         raise ValueError("The type {} is not a valid experiment type. Possible types are 'lottery', 'lottery_branch' "
                          "and 'train'.".format(experiment_type))
 
-    # todo this will be refactored anyway, but it's super inelegant atm. eigentlich reicht es auch, die anzahl der levels abzufragen.
+    # todo simplify when refactoring
     expected_lengths = {key: len(paths["replicate_1"][key]) for key in paths["replicate_1"].keys()}
     for replicate in paths.keys():
         for key in expected_lengths.keys():
@@ -248,3 +251,84 @@ def prepare_neural_persistence_for_plotting(neural_persistences):
             else:
                 neural_pers_for_plotting[key].append(value["total_persistence_normalized"])
     return neural_pers_for_plotting
+
+
+def load_sparsities_of_replicate(paths):
+    sparsities = []
+    for report_path in paths["sparsity"]:
+        sparsities.append(load_sparsity(report_path))
+    return sparsities
+
+
+def load_accuracies_of_replicate(paths):
+    accuracies = []
+    for logger_path in paths["accuracy"]:
+        accuracies.append(load_accuracy(logger_path))
+    return accuracies
+
+
+def load_neural_persistences_of_replicate(paths):
+    neural_persistences = []
+
+    for end_model_path, mask_path in paths["model_end"]:
+        if mask_path is None:
+            neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
+        else:
+            neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
+
+    return neural_persistences
+
+
+def get_neural_persistence_for_unmasked_weights(model_path):
+    neural_pers_calc = PerLayerCalculation()
+    return neural_pers_calc(load_unmasked_weights(model_path))
+
+
+def get_neural_persistence_for_masked_weights(model_path, mask_path):
+    neural_pers_calc = PerLayerCalculation()
+    return neural_pers_calc(load_masked_weights(model_path, mask_path))
+
+
+def load_sparsities_of_experiment(paths):
+    for i, replicate in enumerate(paths.keys()):
+        if i == 0:
+            first_replicate = replicate
+            sparsities = [load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+        else:
+            sparsities_to_be_checked = [load_sparsity(spars) for spars in paths[replicate]["sparsity"]]
+            assert_sparsities_equal(sparsities, sparsities_to_be_checked, first_replicate, replicate)
+    return sparsities
+
+
+def assert_sparsities_equal(expected_sparsities, actual_sparsities, key_expected_sparsities, key_actual_sparsities):
+    assert actual_sparsities == expected_sparsities, \
+        "The sparsities in replicate {} differ from the sparsities in replicate {}, although they should " \
+        "be equal. The sparsities in question are {} and {} respectively. Please make sure that you did " \
+        "not mix up any experiments.".format(key_expected_sparsities, key_actual_sparsities,
+                                             expected_sparsities, actual_sparsities)
+
+
+def load_accuracies_of_experiment(paths):
+    for i, replicate in enumerate(paths.keys()):
+        if i == 0:
+            accuracies = np.ones((len(paths.keys()), len(paths[replicate]["accuracy"]))) * (-1)
+        accuracies[i] = [load_accuracy(acc) for acc in paths[replicate]["accuracy"]]
+    return accuracies
+
+
+def load_neural_persistences_of_experiment(paths):
+    # format:
+    # [[replicate1.sparsity_level0, replicate1.sparsity_level1, ...],
+    #  [replicate2.sparsity_level0, replicate2.sparsity_level1, ...],
+    #  ...]
+    # where each replicateX.sparsity_levelY is a dict containing the neural persistences
+    neural_persistences = []
+    for replicate in paths.keys():
+        np_for_replicate = []
+        for end_model_path, mask_path in paths[replicate]["model_end"]:
+            if mask_path is None:
+                np_for_replicate.append(get_neural_persistence_for_unmasked_weights(end_model_path))
+            else:
+                np_for_replicate.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
+        neural_persistences.append(np_for_replicate)
+    return neural_persistences
