@@ -598,14 +598,14 @@ class TestSparsityAccuracyExperimentEvaluator(unittest.TestCase):
                   "testing.")
 
 
-class TestLoadingSparsitiesForExperiment(unittest.TestCase):
-    def test_load_sparsities_for_experiment(self):
+class TestLoadingFunctionsForExperiment(unittest.TestCase):
+    def test_load_sparsities_of_experiment(self):
         expected_sparsities = [1.0, 212959.0/266200.0]
         experiment_path = "./resources/test_plots/lottery_simplified_experiment"
         valid_epochs = 2
         paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
 
-        actual_sparsities = experiment.load_sparsities_for_experiment(paths)
+        actual_sparsities = experiment.load_sparsities_of_experiment(paths)
 
         self.assertEqual(expected_sparsities, actual_sparsities)
 
@@ -615,7 +615,7 @@ class TestLoadingSparsitiesForExperiment(unittest.TestCase):
         paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
 
         with self.assertRaises(AssertionError):
-            experiment.load_sparsities_for_experiment(paths)
+            experiment.load_sparsities_of_experiment(paths)
 
     def test_assert_sparsities_equal_raises_on_unequal_sparsities(self):
         sparsities1 = [1., .2]
@@ -632,6 +632,16 @@ class TestLoadingSparsitiesForExperiment(unittest.TestCase):
 
         self.assertIsNone(should_be_none)
 
+    def test_load_accuracies_of_experiment(self):
+        expected_accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
+
+        actual_accuracies = experiment.load_accuracies_of_experiment(paths)
+
+        np.testing.assert_array_equal(expected_accuracies, actual_accuracies)
+
 
 class TestNeuralPersistenceExperimentEvaluator(unittest.TestCase):
     def test_inheritance(self):
@@ -646,6 +656,21 @@ class TestNeuralPersistenceExperimentEvaluator(unittest.TestCase):
                                    experiment.ExperimentEvaluator))
         self.assertTrue(issubclass(ConcreteNeuralPersistenceExperimentEvaluator,
                                    experiment.ReplicateEvaluator))
+
+    def test_load_y_data(self):
+        expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
+        expected_y_data = [[expected_np_level_0, expected_np_level_1], [expected_np_level_0, expected_np_level_1]]
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        evaluator = ConcreteNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
+        paths = evaluator.get_paths()
+
+        evaluator.load_y_data(paths)
+
+        self.assertEqual(expected_y_data, evaluator.y_data)
+        for i in range(len(expected_y_data)):
+            self.assertDictEqual(expected_y_data[i][0], evaluator.y_data[i][0])
+            self.assertDictEqual(expected_y_data[i][1], evaluator.y_data[i][1])
 
     def test_prepare_data_for_plotting(self):
         experiment_path = "./resources/test_plots/lottery_simplified_experiment"
@@ -735,10 +760,6 @@ class ConcreteNeuralPersistenceExperimentEvaluator(experiment.NeuralPersistenceE
         raise NotImplementedError("Trying to call load_x_data from mock class "
                                   "ConcreteNeuralPersistenceExperimentEvaluator.")
 
-    def load_y_data(self, paths):
-        raise NotImplementedError("Trying to call load_y_data from mock class "
-                                  "ConcreteNeuralPersistenceExperimentEvaluator.")
-
     def prepare_x_data_for_plotting(self):
         pass
 
@@ -800,21 +821,6 @@ class TestSparsityNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         evaluator.load_x_data(paths)
 
         self.assertEqual(expected_sparsities, evaluator.x_data)
-
-    def test_load_y_data(self):
-        expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
-        expected_y_data = [[expected_np_level_0, expected_np_level_1], [expected_np_level_0, expected_np_level_1]]
-        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
-        valid_epochs = 2
-        evaluator = experiment.SparsityNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
-        paths = evaluator.get_paths()
-
-        evaluator.load_y_data(paths)
-
-        self.assertEqual(expected_y_data, evaluator.y_data)
-        for i in range(len(expected_y_data)):
-            self.assertDictEqual(expected_y_data[i][0], evaluator.y_data[i][0])
-            self.assertDictEqual(expected_y_data[i][1], evaluator.y_data[i][1])
 
     def test_prepare_x_data_for_plotting(self):
         expected_sparsities = [1.0, 212959.0/266200.0]
@@ -965,21 +971,6 @@ class TestAccuracyNeuralPersistenceExperimentEvaluator(unittest.TestCase):
         evaluator.load_x_data(paths)
 
         np.testing.assert_array_equal(expected_accuracies, evaluator.x_data)
-
-    def test_load_y_data(self):  # load neural persistences
-        expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
-        expected_y_data = [[expected_np_level_0, expected_np_level_1], [expected_np_level_0, expected_np_level_1]]
-        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
-        valid_epochs = 2
-        evaluator = experiment.AccuracyNeuralPersistenceExperimentEvaluator(experiment_path, valid_epochs)
-        paths = evaluator.get_paths()
-
-        evaluator.load_y_data(paths)
-
-        self.assertEqual(expected_y_data, evaluator.y_data)
-        for i in range(len(expected_y_data)):
-            self.assertDictEqual(expected_y_data[i][0], evaluator.y_data[i][0])
-            self.assertDictEqual(expected_y_data[i][1], evaluator.y_data[i][1])
 
     def test_prepare_x_data_for_plotting(self):
         expected_accuracies = np.asarray([[0.9644, 0.9678], [0.9544, 0.9878]])
