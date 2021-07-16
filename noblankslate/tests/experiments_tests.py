@@ -260,6 +260,42 @@ class TestSparsityAccuracyOnSingleReplicateEvaluator(unittest.TestCase):
                   "testing.")
 
 
+class TestLoadingUtilities(unittest.TestCase):  # todo refactor name
+    def test_load_sparsities_of_replicate(self):
+        expected_sparsities = [1.0, 212959.0/266200.0]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+        paths = evaluator.get_paths()
+
+        actual_sparsities = experiment.load_sparsities_of_replicate(paths)
+
+        self.assertEqual(expected_sparsities, actual_sparsities)
+
+    def test_load_accuracies_of_replicate(self):
+        expected_accuracies = [0.9644, 0.9678]
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+        paths = evaluator.get_paths()
+
+        actual_accuracies = experiment.load_accuracies_of_replicate(paths)
+
+        self.assertEqual(expected_accuracies, actual_accuracies)
+
+    def test_load_neural_persistences_of_replicate(self):
+        expected_np_level_0, expected_np_level_1 = get_neural_persistences_for_lottery_simplified()
+        valid_num_epochs = 2
+        path_to_replicate = "./resources/test_plots/lottery_simplified/replicate_1"
+        evaluator = ConcreteReplicateEvaluator(path_to_replicate, valid_num_epochs)
+        paths = evaluator.get_paths()
+
+        actual_nps = experiment.load_neural_persistences_of_replicate(paths)
+
+        self.assertDictEqual(expected_np_level_0, actual_nps[0])
+        self.assertDictEqual(expected_np_level_1, actual_nps[1])
+
+
 class TestSparsityNeuralPersistenceOnSingleReplicateEvaluator(unittest.TestCase):
     def test_is_subclass_of_ReplicateEvaluator(self):
         valid_num_epochs = 1

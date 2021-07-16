@@ -80,16 +80,10 @@ class ReplicateEvaluator(metaclass=abc.ABCMeta):
 
 class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
     def load_x_data(self, paths):
-        sparsities = []
-        for report_path in paths["sparsity"]:
-            sparsities.append(utils.load_sparsity(report_path))
-        self.x_data = sparsities
+        self.x_data = load_sparsities_of_replicate(paths)
 
     def load_y_data(self, paths):
-        accuracies = []
-        for logger_path in paths["accuracy"]:
-            accuracies.append(utils.load_accuracy(logger_path))
-        self.y_data = accuracies
+        self.y_data = load_accuracies_of_replicate(paths)
 
     def prepare_data_for_plotting(self):
         pass  # nothing to do for this type of plot
@@ -98,23 +92,26 @@ class SparsityAccuracyOnSingleReplicateEvaluator(ReplicateEvaluator):
         return plotters.SparsityAccuracyReplicatePlotter()
 
 
-class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
-    def load_x_data(self, paths):
+def load_sparsities_of_replicate(paths):
         sparsities = []
         for report_path in paths["sparsity"]:
             sparsities.append(utils.load_sparsity(report_path))
-        self.x_data = sparsities
+        return sparsities
+
+
+def load_accuracies_of_replicate(paths):
+    accuracies = []
+    for logger_path in paths["accuracy"]:
+        accuracies.append(utils.load_accuracy(logger_path))
+    return accuracies
+
+
+class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
+    def load_x_data(self, paths):
+        self.x_data = load_sparsities_of_replicate(paths)
 
     def load_y_data(self, paths):
-        neural_persistences = []
-
-        for end_model_path, mask_path in paths["model_end"]:
-            if mask_path is None:
-                neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
-            else:
-                neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
-
-        self.y_data = neural_persistences
+        self.y_data = load_neural_persistences_of_replicate(paths)
 
     def prepare_data_for_plotting(self):
         # nothing to do for self.x_data
@@ -122,6 +119,18 @@ class SparsityNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
 
     def get_plotter(self):
         return plotters.SparsityNeuralPersistenceReplicatePlotter()
+
+
+def load_neural_persistences_of_replicate(paths):
+    neural_persistences = []
+
+    for end_model_path, mask_path in paths["model_end"]:
+        if mask_path is None:
+            neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
+        else:
+            neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
+
+    return neural_persistences
 
 
 def get_neural_persistence_for_unmasked_weights(model_path):
@@ -136,21 +145,10 @@ def get_neural_persistence_for_masked_weights(model_path, mask_path):
 
 class AccuracyNeuralPersistenceOnSingleReplicateEvaluator(ReplicateEvaluator):
     def load_x_data(self, paths):
-        accuracies = []
-        for logger_path in paths["accuracy"]:
-            accuracies.append(utils.load_accuracy(logger_path))
-        self.x_data = accuracies
+        self.x_data = load_accuracies_of_replicate(paths)
 
     def load_y_data(self, paths):
-        neural_persistences = []
-
-        for end_model_path, mask_path in paths["model_end"]:
-            if mask_path is None:
-                neural_persistences.append(get_neural_persistence_for_unmasked_weights(end_model_path))
-            else:
-                neural_persistences.append(get_neural_persistence_for_masked_weights(end_model_path, mask_path))
-
-        self.y_data = neural_persistences
+        self.y_data = load_neural_persistences_of_replicate(paths)
 
     def prepare_data_for_plotting(self):
         # nothing to do for self.x_data
