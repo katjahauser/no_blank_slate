@@ -10,8 +10,6 @@ import src.utils as utils
 # plots:
 # todo * NP of mask vs NP of masked weights
 # todo add replicates to replicate plotting function save paths
-# todo exchange dicts for ordered dicts where necessary
-# todo make sure defaultdicts behave (no reliance on key errors that they don't throw)
 # todo remove doubling in code (loading accuracy etc) and move to utils
 
 
@@ -323,6 +321,9 @@ class NeuralPersistenceExperimentEvaluator(ExperimentEvaluator):
 
     @abc.abstractmethod
     def prepare_neural_persistences_for_plotting(self):
+        # takes an np.array(shape=(layers, sparsity_levels, replicates)) as an argument.
+        # The layer names are extracted by calling .keys(), i.e., the layer names are presented in insertion order,
+        # therefore you should not change the ordering of the array along the first axis.
         raise NotImplementedError("Trying to call prepare_neural_persistences from abstract base class "
                                   "NeuralPersistenceExperimentEvaluator.")
 
