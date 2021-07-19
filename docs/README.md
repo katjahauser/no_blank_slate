@@ -1,16 +1,33 @@
+# About 
+
+This code base is used to evaluate Lottery Ticket Hypothesis type experiments with a focus on the network structure of the winning tickets. Currently, I am using a topological method, the Neural Persistence, for evaluation of winning tickets created with the OpenLTH framework. 
+
+This code base is work in progress and will be extended by new experiments in the future. 
+
+
 # Installation 
 
-## Pre-installation actions
+## Pre-installation actions 
 
-Set up any virtual environments, etc. you want to use. `Python` version max. `3.8`, due to dependencies of the LTH framework (as of 05/2021).
+Set up any virtual environments you want to use. If you want to install our code and the OpenLTH framework in the same environment, your `python` version can be at most `3.8`, due to dependencies of the OpenLTH framework (as of 05/2021). You need not install both in the same environment, since my code does not directly use OpenLTH code (as of 07/2021). I nevertheless recommend using `pyton 3.8` since I developed the code base in it.
 
-## Install the Neural Persistence framework
+The code expects the dependencies (below) to live in the `./deps` folder, please install them there. 
 
-We are only interested in the contents of tda.py which requires `Aleph` to be installed . Picking out the necessary lines from the Dockerfile worked for me to this end. 
+## Install the Neural Persistence framework 
 
-Please note that the Neural Persistence framework otherwise seems to be using an older version of tensorflow, e.g. the deprecated tensorflow.examples. 
+Clone code from [https://github.com/BorgwardtLab/Neural-Persistence](https://github.com/BorgwardtLab/Neural-Persistence). 
 
-## Install the Lottery Ticket Hypothesis framework
+Neural-Persistence uses `Tensorflow 1.6`. However, I am only interested in the content of `Neural-Persistence/src/tda.py` which requires the library `Aleph` to be installed, but not `Tensorflow`. Therefore, you can either follow the Docker file installation (untested) or just pick out the relevant lines for `Aleph` from the Docker file.
+
+## Install the Lottery Ticket Hypothesis framework (optional) 
+
+(You do not need to do this, if you already have OpenLTH running on your machine -- I only work on the outputs of the OpenLTH framework.)
+
+Clone code from [https://github.com/facebookresearch/open_lth](https://github.com/facebookresearch/open_lth).
 
 `python3 setup.py install`
 
+
+# License 
+
+This code base uses the MIT license. Please refer to [docs/license.md](https://github.com/katjahauser/no_blank_slate/blob/master/docs/license.md) for details. 
