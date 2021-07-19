@@ -1,9 +1,10 @@
-*.log
-*.aux
-*.pdf
-*.synctex.gz
+*.idea
+*/__pycache__/
 
-noblankslate/deps
-noblankslate/data
-noblankslate/experiments
-noblankslate/tests/resources
+deps
+data
+experiments
+tests/resources
+
+*.coverage
+*/htmlcov
