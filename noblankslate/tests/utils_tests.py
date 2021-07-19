@@ -359,6 +359,20 @@ class TestLoadingFunctionsForExperiment(unittest.TestCase):
 
         np.testing.assert_array_equal(expected_accuracies, actual_accuracies)
 
+    def test_load_neural_persistences_of_experiment(self):
+        expected_np_level_0, expected_np_level_1 = experiments_tests.get_neural_persistences_for_lottery_simplified()
+        expected_nps = [[expected_np_level_0, expected_np_level_1], [expected_np_level_0, expected_np_level_1]]
+        experiment_path = "./resources/test_plots/lottery_simplified_experiment"
+        valid_epochs = 2
+        paths = utils.get_paths_from_experiment(experiment_path, "lottery", valid_epochs)
+
+        actual_nps = utils.load_neural_persistences_of_experiment(paths)
+
+        self.assertEqual(expected_nps, actual_nps)
+        for i in range(len(expected_nps)):
+            self.assertDictEqual(expected_nps[i][0], actual_nps[i][0])
+            self.assertDictEqual(expected_nps[i][1], actual_nps[i][1])
+
 
 if __name__ == '__main__':
     unittest.main()

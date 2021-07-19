@@ -17,7 +17,7 @@ def prepare_ordered_dict_from_model(model):
     """
 
     weights = OrderedDict()
-    weight_keys = [key for key in model.keys() if "weight" in key]
+    weight_keys = [key for key in model.keys() if "weight" in key]  # filter biases
     for key in weight_keys:
         weights.update({key: model[key].detach().numpy()})
     return weights
