@@ -53,12 +53,16 @@ class PlotterBaseClass(metaclass=abc.ABCMeta):
         axis.set_ylabel(self.y_label)
 
     def save_plot(self, experiment_root_path):
-        path_handler = ReplicatePathHandler()
+        path_handler = self.get_path_handler()
         save_dir = path_handler.prepare_plot_dir(experiment_root_path)
         path_handler.make_dir_if_does_not_exist(save_dir)
         save_path = path_handler.create_save_path(save_dir, self.save_file_name)
 
         self.figure.savefig(save_path)
+
+    @staticmethod
+    def get_path_handler():
+        return ReplicatePathHandler()
 
     def show_plot(self):
         if self.axis is None:
@@ -151,6 +155,18 @@ class ExperimentPlotterBaseClass(PlotterBaseClass):
     def plot_data(self, axis, x_values, y_values):
         # plot_data takes an axis object to enforce calling setup_axis before calling plot_data
         raise NotImplementedError("Trying to call plot_data of abstract class ExperimentPlotterBaseClass.")
+
+    @staticmethod
+    def get_path_handler():
+        return ExperimentPathHandler()
+
+
+class ExperimentPathHandler(ReplicatePathHandler):
+    @staticmethod
+    def prepare_plot_dir(experiment_root):
+        if experiment_root[-1] != "/":
+            experiment_root = experiment_root + "/"
+        return experiment_root + "plots/"
 
 
 class SparsityAccuracyExperimentPlotter(ExperimentPlotterBaseClass):

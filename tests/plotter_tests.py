@@ -71,6 +71,13 @@ class TestPlotterBaseClass(unittest.TestCase):
 
         self.assertTrue(os.path.exists(test_path))
 
+    def test_get_path_handler(self):
+        plotter = ConcretePlotter()
+
+        handler = plotter.get_path_handler()
+
+        self.assertTrue(isinstance(handler, plotters.ReplicatePathHandler))
+
     def test_show_plot_shows_when_axis_not_none(self):
         if not show_no_plots_for_automated_tests:
             plotter = ConcretePlotter()
@@ -364,6 +371,13 @@ class TestExperimentPlotterBaseClass(unittest.TestCase):
         with self.assertRaises(ValueError):
             plotter.generate_title_if_valid_num_replicates(not_int)
 
+    def test_get_path_handler(self):
+        plotter = ConcreteExperimentPlotter()
+
+        handler = plotter.get_path_handler()
+
+        self.assertTrue(isinstance(handler, plotters.ExperimentPathHandler))
+
 
 class ConcreteExperimentPlotter(plotters.ExperimentPlotterBaseClass):
     title = "ConcreteExperimentPlotter"
@@ -373,6 +387,25 @@ class ConcreteExperimentPlotter(plotters.ExperimentPlotterBaseClass):
 
     def plot_data(self, axis, x_values, y_values):
         pass
+
+
+class TestExperimentPathHandler(unittest.TestCase):
+    def test_inheritence(self):
+        handler = plotters.ExperimentPathHandler()
+
+        self.assertTrue(isinstance(handler, plotters.ReplicatePathHandler))
+
+    def test_prepare_plot_dir(self):
+        handler = plotters.ExperimentPathHandler()
+        dummy_path = "./dummy_path/"
+        dummy_path_wo_trailing_slash = "./dummy_path"
+        expected_dir = "./dummy_path/plots/"
+
+        actual_dir = handler.prepare_plot_dir(dummy_path)
+        actual_dir_from_path_wo_trailing_slash = handler.prepare_plot_dir(dummy_path_wo_trailing_slash)
+
+        self.assertEqual(expected_dir, actual_dir)
+        self.assertEqual(expected_dir, actual_dir_from_path_wo_trailing_slash)
 
 
 class TestSparsityAccuracyExperimentPlotter(unittest.TestCase):
