@@ -1,9 +1,11 @@
+# Project discontinued
+
+This project has been discontinued and will not be maintained. 
+If you are by chance interested in the same question (see About section), I suggest you ask the Borgwardt-Lab to also publish their CNN code since could not be found as of July 2021. Feel free to drop me a note, if you found out anything. 
+
 # About 
 
 This code base is used to evaluate Lottery Ticket Hypothesis type experiments with a focus on the network structure of the winning tickets. Currently, I am using a topological method, the Neural Persistence, for evaluation of winning tickets created with the OpenLTH framework. 
-
-This code base is work in progress and will be extended by new experiments in the future. 
-
 
 # Installation 
 
